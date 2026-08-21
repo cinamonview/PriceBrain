@@ -84,8 +84,124 @@ class CrawlTargetRepository:
         priority: int | None = None,
         external_product_id: str | None = None,
         now: datetime | None = None,
-    ) -> tuple[CrawlTarget, bool]:
+    ) -> tuple[CrawlTarget, str]:
         """Register or update catalog metadata without touching operational crawl state."""
+        preview = self.preview_catalog_merge(
+            mall_id=mall_id,
+            product_url=product_url,
+            enabled=enabled,
+            crawl_interval_seconds=crawl_interval_seconds,
+            product_name=product_name,
+            category=category,
+            tags=tags,
+            priority=priority,
+            external_product_id=external_product_id,
+            now=now,
+        )
+        if preview.action == "skip":
+            current = self.get(preview.target_id)
+            if current is None:
+                raise RuntimeError(f"Crawl target not found for skip preview: {preview.target_id}")
+            return current, "skip"
+
+        cleaned_url, payload, target_id, current, run_at = self._build_catalog_payload(
+            mall_id=mall_id,
+            product_url=product_url,
+            enabled=enabled,
+            crawl_interval_seconds=crawl_interval_seconds,
+            product_name=product_name,
+            category=category,
+            tags=tags,
+            priority=priority,
+            external_product_id=external_product_id,
+            now=now,
+        )
+        action = "create" if current is None else "update"
+        if current is None:
+            payload["created_at"] = run_at
+            payload["next_crawl_at"] = run_at
+        elif current.next_crawl_at is None:
+            payload["next_crawl_at"] = run_at
+
+        self._db.collection(CRAWLER_TARGETS_COLLECTION).document(target_id).set(
+            payload,
+            merge=True,
+        )
+        saved = self.get(target_id)
+        if saved is None:
+            raise RuntimeError(f"Failed to merge crawl target catalog entry: {target_id}")
+        return saved, action
+
+    def preview_catalog_merge(
+        self,
+        *,
+        mall_id: str,
+        product_url: str,
+        enabled: bool = True,
+        crawl_interval_seconds: int | None = None,
+        product_name: str | None = None,
+        category: str | None = None,
+        tags: list[str] | None = None,
+        priority: int | None = None,
+        external_product_id: str | None = None,
+        now: datetime | None = None,
+    ) -> SeedPreview:
+        from pricebrain_app.crawler.target_management import SeedPreview
+
+        cleaned_url, payload, target_id, current, _run_at = self._build_catalog_payload(
+            mall_id=mall_id,
+            product_url=product_url,
+            enabled=enabled,
+            crawl_interval_seconds=crawl_interval_seconds,
+            product_name=product_name,
+            category=category,
+            tags=tags,
+            priority=priority,
+            external_product_id=external_product_id,
+            now=now,
+        )
+        if current is None:
+            changes = tuple(
+                (field, None, payload[field])
+                for field in _CATALOG_COMPARE_FIELDS
+                if field in payload
+            )
+            return SeedPreview(
+                target_id=target_id,
+                action="create",
+                product_url=cleaned_url,
+                changes=changes,
+            )
+
+        changes = _catalog_changes(current, payload)
+        if not changes:
+            return SeedPreview(
+                target_id=target_id,
+                action="skip",
+                product_url=cleaned_url,
+                changes=(),
+            )
+        return SeedPreview(
+            target_id=target_id,
+            action="update",
+            product_url=cleaned_url,
+            changes=changes,
+        )
+
+    def _build_catalog_payload(
+        self,
+        *,
+        mall_id: str,
+        product_url: str,
+        enabled: bool,
+        crawl_interval_seconds: int | None,
+        product_name: str | None,
+        category: str | None,
+        tags: list[str] | None,
+        priority: int | None,
+        external_product_id: str | None,
+        now: datetime | None,
+    ) -> tuple[str, dict[str, Any], str, CrawlTarget | None, datetime]:
         cleaned_url = validate_target_url(mall_id, product_url)
         target_id = build_target_id(mall_id, cleaned_url)
         current = self.get(target_id)
@@ -114,22 +230,7 @@ class CrawlTargetRepository:
             payload["crawl_interval_seconds"] = int(crawl_interval_seconds)
         if normalized_priority is not None:
             payload["priority"] = normalized_priority
-
-        created = current is None
-        if created:
-            payload["created_at"] = run_at
-            payload["next_crawl_at"] = run_at
-        elif current.next_crawl_at is None:
-            payload["next_crawl_at"] = run_at
-
-        self._db.collection(CRAWLER_TARGETS_COLLECTION).document(target_id).set(
-            payload,
-            merge=True,
-        )
-        saved = self.get(target_id)
-        if saved is None:
-            raise RuntimeError(f"Failed to merge crawl target catalog entry: {target_id}")
-        return saved, created
+        return cleaned_url, payload, target_id, current, run_at
 
     def bulk_set_enabled(
         self,
@@ -167,6 +268,7 @@ class CrawlTargetRepository:
         enabled: bool | None = None,
         category: str | None = None,
         tag: str | None = None,
+        priority_min: int | None = None,
     ) -> list[CrawlTarget]:
         targets: list[CrawlTarget] = []
         for doc in self._db.collection(CRAWLER_TARGETS_COLLECTION).stream():
@@ -181,6 +283,8 @@ class CrawlTargetRepository:
             if tag is not None and tag.strip().lower() not in {
                 item.lower() for item in target.tags
             }:
+                continue
+            if priority_min is not None and target.priority < int(priority_min):
                 continue
             targets.append(target)
         return sorted(targets, key=lambda item: (-item.priority, item.target_id))
@@ -299,3 +403,36 @@ def _result_error_code(result: CrawlerResult) -> str | None:
     if result.message in {"SSG_ACCESS_DENIED", "ACCESS_DENIED", "NOT_FOUND"}:
         return result.message
     return result.status.value
+
+
+_CATALOG_COMPARE_FIELDS = (
+    "mall_id",
+    "product_url",
+    "enabled",
+    "crawl_interval_seconds",
+    "external_product_id",
+    "product_name",
+    "category",
+    "tags",
+    "priority",
+)
+
+
+def _catalog_changes(current: CrawlTarget, payload: dict[str, Any]) -> tuple[tuple[str, Any, Any], ...]:
+    changes: list[tuple[str, Any, Any]] = []
+    for field in _CATALOG_COMPARE_FIELDS:
+        current_value = _catalog_field_value(current, field)
+        planned_value = payload.get(field, current_value)
+        if field == "tags":
+            if list(current_value or []) != list(planned_value or []):
+                changes.append((field, current_value, planned_value))
+            continue
+        if current_value != planned_value:
+            changes.append((field, current_value, planned_value))
+    return tuple(changes)
+
+
+def _catalog_field_value(target: CrawlTarget, field: str) -> Any:
+    if field == "tags":
+        return list(target.tags)
+    return getattr(target, field)

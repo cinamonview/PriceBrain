@@ -1,22 +1,24 @@
 [
   {
     "mall_id": "ssg",
-    "product_url": "https://example.com/products/gpu-placeholder-1",
-    "product_name": "Example GPU Placeholder 1",
+    "external_product_id": "example-rtx5080-001",
+    "product_name": "Example RTX 5080",
+    "brand": "Example Vendor",
     "category": "gpu",
-    "tags": ["nvidia", "rtx5080", "example-vendor"],
-    "crawl_interval_seconds": 3600,
+    "tags": ["rtx5080", "nvidia", "16gb"],
+    "priority": 100,
     "enabled": true,
-    "priority": 100
+    "product_url": "https://example.com/products/example-rtx5080-001"
   },
   {
     "mall_id": "ssg",
-    "product_url": "https://example.com/products/gpu-placeholder-2",
-    "product_name": "Example GPU Placeholder 2",
+    "external_product_id": "example-rtx5070-001",
+    "product_name": "Example RTX 5070",
+    "brand": "Example Vendor",
     "category": "gpu",
-    "tags": ["nvidia", "rtx5080"],
-    "crawl_interval_seconds": 3600,
+    "tags": ["rtx5070", "nvidia", "16gb"],
+    "priority": 80,
     "enabled": false,
-    "priority": 50
+    "product_url": "https://example.com/products/example-rtx5070-001"
   }
 ]

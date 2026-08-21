@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# Local operational files (real product URLs — never commit)
+local/
+
 # Python
 *.pyc
 __pycache__/

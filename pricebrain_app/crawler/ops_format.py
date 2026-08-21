@@ -7,6 +7,7 @@ from datetime import datetime
 from pricebrain_app.crawler.ops_models import (
     CrawlerFailureView,
     CrawlerOpsSummary,
+    GpuCatalogSummary,
     MallOpsSummary,
     PriceChangeView,
     ScheduleEntry,
@@ -28,6 +29,20 @@ def _fmt_price(value: int | None) -> str:
     if value is None:
         return "-"
     return f"{value:,}"
+
+
+def format_gpu_catalog_summary(summary: GpuCatalogSummary) -> str:
+    lines = [
+        "GPU Catalog",
+        "--------------------",
+        f"total: {summary.total}",
+        f"enabled: {summary.enabled}",
+        f"disabled: {summary.disabled}",
+        "",
+    ]
+    for label, count in summary.model_counts:
+        lines.append(f"{label}: {count}")
+    return "\n".join(lines)
 
 
 def format_status_summary(summary: CrawlerOpsSummary, malls: list[MallOpsSummary]) -> str:

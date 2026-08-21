@@ -104,6 +104,22 @@ class CrawlerOpsSummary:
 
 
 @dataclass(frozen=True)
+class GpuCatalogSummary:
+    total: int
+    enabled: int
+    disabled: int
+    model_counts: tuple[tuple[str, int], ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "total": self.total,
+            "enabled": self.enabled,
+            "disabled": self.disabled,
+            "models": {label: count for label, count in self.model_counts},
+        }
+
+
+@dataclass(frozen=True)
 class MallOpsSummary:
     mall_id: str
     total: int

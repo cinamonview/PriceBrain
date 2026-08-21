@@ -14,6 +14,7 @@ from pricebrain_app.crawler.target_management import (
     bulk_set_enabled,
     load_catalog_entries_from_file,
     seed_catalog_entries,
+    seed_gpu_catalog_file,
 )
 from pricebrain_app.crawler.target_repository import CrawlTargetRepository
 from pricebrain_app.crawler.targets import DEFAULT_TARGET_PRIORITY, build_target_id
@@ -96,7 +97,8 @@ def test_seed_is_idempotent_on_repeat(target_repo: CrawlTargetRepository, tmp_pa
     assert first.created == 2
     assert first.updated == 0
     assert second.created == 0
-    assert second.updated == 2
+    assert second.updated == 0
+    assert second.skipped == 2
 
 
 def test_seed_preserves_operational_state(target_repo: CrawlTargetRepository, tmp_path: Path) -> None:
@@ -129,7 +131,8 @@ def test_seed_preserves_operational_state(target_repo: CrawlTargetRepository, tm
     )
 
     saved = target_repo.get(TARGET_ID)
-    assert reseed.updated == 2
+    assert reseed.updated == 1
+    assert reseed.skipped == 1
     assert saved is not None
     assert saved.product_name == "Updated GPU Name"
     assert saved.crawl_interval_seconds == 900
@@ -159,14 +162,15 @@ def test_seed_rejects_invalid_url(target_repo: CrawlTargetRepository, tmp_path: 
             "category": "gpu",
         }
     ]
-    result = seed_catalog_entries(
+    result = seed_gpu_catalog_file(
         target_repo,
-        load_catalog_entries_from_file(_write_catalog_file(payload, tmp_path)),
+        _write_catalog_file(payload, tmp_path),
         now=NOW,
     )
 
     assert result.created == 0
     assert result.updated == 0
+    assert result.invalid == 1
     assert len(result.errors) == 1
     assert "not an SSG product page" in result.errors[0]
 
@@ -179,13 +183,14 @@ def test_seed_rejects_invalid_mall_id(target_repo: CrawlTargetRepository, tmp_pa
             "category": "gpu",
         }
     ]
-    result = seed_catalog_entries(
+    result = seed_gpu_catalog_file(
         target_repo,
-        load_catalog_entries_from_file(_write_catalog_file(payload, tmp_path)),
+        _write_catalog_file(payload, tmp_path),
         now=NOW,
     )
 
     assert result.created == 0
+    assert result.invalid == 1
     assert len(result.errors) == 1
     assert "Unsupported mall" in result.errors[0]
 
@@ -290,12 +295,13 @@ def test_seed_gpu_targets_cli(
     catalog_path = _write_catalog_file(_catalog_payload(), tmp_path)
     monkeypatch.setattr(seed_gpu_targets, "get_firestore_client", lambda: target_repo._db)
 
-    exit_code = seed_gpu_targets.main(["--file", str(catalog_path)])
+    exit_code = seed_gpu_targets.main(["--file", str(catalog_path), "--json"])
     output = json.loads(capsys.readouterr().out)
 
     assert exit_code == 0
     assert output["created"] == 2
     assert output["updated"] == 0
+    assert output["total"] == 2
     assert target_repo.get(TARGET_ID) is not None
 
 

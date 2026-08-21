@@ -12,7 +12,11 @@ from pricebrain_app.crawler.ops_cli import (
     print_error,
     print_json,
 )
-from pricebrain_app.crawler.ops_format import format_status_summary, format_worker_health
+from pricebrain_app.crawler.ops_format import (
+    format_gpu_catalog_summary,
+    format_status_summary,
+    format_worker_health,
+)
 from pricebrain_app.crawler.worker_health import get_worker_health
 
 
@@ -26,6 +30,7 @@ def main(argv: list[str] | None = None) -> int:
         view = build_operations_view()
         summary = view.summarize()
         malls = view.summarize_by_mall()
+        gpu_catalog = view.summarize_gpu_catalog()
     except Exception as exc:
         print_error(f"Error: {exc}")
         return 1
@@ -36,6 +41,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     print(format_status_summary(summary, malls))
+    print()
+    print(format_gpu_catalog_summary(gpu_catalog))
     print()
     print(format_worker_health(get_worker_health()))
     print()

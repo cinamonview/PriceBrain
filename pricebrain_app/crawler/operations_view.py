@@ -6,12 +6,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+from pricebrain_app.crawler.gpu_catalog import gpu_model_label_from_target
 from pricebrain_app.crawler.logging_utils import safe_url_for_log
 from pricebrain_app.crawler.malls.ssg import extract_ssg_item_id
 from pricebrain_app.crawler.metrics import get_crawler_metrics
 from pricebrain_app.crawler.ops_models import (
     CrawlerFailureView,
     CrawlerOpsSummary,
+    GpuCatalogSummary,
     MallOpsSummary,
     PriceChangeView,
     ScheduleEntry,
@@ -32,6 +34,7 @@ class TargetListFilter:
     enabled: bool | None = None
     category: str | None = None
     tag: str | None = None
+    priority_min: int | None = None
     due_only: bool = False
     failed_only: bool = False
 
@@ -105,6 +108,7 @@ class CrawlerOperationsView:
             enabled=flt.enabled,
             category=flt.category,
             tag=flt.tag,
+            priority_min=flt.priority_min,
         )
         views = [build_target_view(target, now=run_at) for target in raw]
         if flt.due_only:
@@ -169,6 +173,24 @@ class CrawlerOperationsView:
                 )
             )
         return summaries
+
+    def summarize_gpu_catalog(self) -> GpuCatalogSummary:
+        targets = self._targets.list_all(category="gpu")
+        enabled = [target for target in targets if target.enabled]
+        disabled = [target for target in targets if not target.enabled]
+        model_counts: dict[str, int] = {}
+        for target in targets:
+            label = gpu_model_label_from_target(
+                product_name=target.product_name,
+                tags=target.tags,
+            )
+            model_counts[label] = model_counts.get(label, 0) + 1
+        return GpuCatalogSummary(
+            total=len(targets),
+            enabled=len(enabled),
+            disabled=len(disabled),
+            model_counts=tuple(sorted(model_counts.items(), key=lambda item: (-item[1], item[0]))),
+        )
 
     def list_recent_failures(
         self,
@@ -238,6 +260,7 @@ class CrawlerOperationsView:
         return {
             "summary": self.summarize(now=now).to_dict(),
             "malls": [item.to_dict() for item in self.summarize_by_mall(now=now)],
+            "gpu_catalog": self.summarize_gpu_catalog().to_dict(),
             "metrics": get_crawler_metrics().to_dict(),
             "worker_health": get_worker_health().to_dict(),
         }
