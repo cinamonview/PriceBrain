@@ -220,6 +220,51 @@ export interface ExecutionResponse {
   entries: ExecutionHistorySnapshot[];
 }
 
+export interface AuditEvent {
+  event_id: string;
+  event_type: string;
+  occurred_at: string;
+  alert_id?: string | null;
+  target_id?: string | null;
+  mall_id?: string | null;
+  channel?: string | null;
+  status?: string | null;
+  price?: number | null;
+  previous_price?: number | null;
+  classification?: string | null;
+  runner_cycle_id?: string | null;
+  message?: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface AuditEventSnapshot {
+  event?: AuditEvent | null;
+  summary: string;
+  read_error?: string | null;
+}
+
+export interface AuditSummary {
+  total: number;
+  recent: number;
+  by_type: Record<string, number>;
+  by_status: Record<string, number>;
+  by_channel: Record<string, number>;
+  by_area?: Record<string, number>;
+  alert_events: number;
+  notification_events: number;
+  runner_events: number;
+  failure_events?: number;
+  read_errors: number;
+}
+
+export interface AuditResponse {
+  generated_at: string;
+  health: string;
+  health_reasons: string[];
+  summary: AuditSummary;
+  events: AuditEventSnapshot[];
+}
+
 export interface CommandCenterHealth {
   dashboard: string;
   dashboard_reasons: string[];

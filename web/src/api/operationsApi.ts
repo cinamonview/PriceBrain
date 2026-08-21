@@ -1,4 +1,5 @@
 import type {
+  AuditResponse,
   CommandCenterResponse,
   DashboardResponse,
   ExecutionResponse,
@@ -70,6 +71,7 @@ export function createOperationsApi(getToken: () => Promise<string | null>) {
     getInvestigation: () => request<InvestigationResponse>("/api/operations/investigation", getToken),
     getRemediation: () => request<RemediationPlanResponse>("/api/operations/remediation", getToken),
     getExecution: () => request<ExecutionResponse>("/api/operations/execution", getToken),
+    getAudit: () => request<AuditResponse>("/api/operations/audit", getToken),
     getCommandCenter: () => request<CommandCenterResponse>("/api/operations/command-center", getToken),
   };
 }
