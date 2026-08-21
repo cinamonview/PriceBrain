@@ -1,5 +1,5 @@
 const SENSITIVE_KEY_PATTERN =
-  /token|authorization|credential|api[_-]?key|secret|password|webhook|bearer/i;
+  /token|authorization|credential|api[_-]?key|secret|password|webhook|bearer|private[_-]?key/i;
 
 export function looksLikeSecret(value: string): boolean {
   const lowered = value.toLowerCase();

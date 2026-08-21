@@ -15,6 +15,10 @@ export function RemediationLoadingSkeleton() {
   );
 }
 
+export function ExecutionLoadingSkeleton() {
+  return <RemediationLoadingSkeleton />;
+}
+
 export function InvestigationLoadingSkeleton() {
   return <RemediationLoadingSkeleton />;
 }

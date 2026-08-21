@@ -5,6 +5,7 @@ describe("sanitizeMetadataRecord", () => {
   it("redacts sensitive metadata keys and values", () => {
     const sanitized = sanitizeMetadataRecord({
       approval_token: "secret-token",
+      private_key: "pk-test",
       note: "safe",
       nested: {
         authorization: "Bearer abc",
@@ -12,6 +13,7 @@ describe("sanitizeMetadataRecord", () => {
       },
     });
     expect(sanitized.approval_token).toBe("[REDACTED]");
+    expect(sanitized.private_key).toBe("[REDACTED]");
     expect(sanitized.note).toBe("safe");
     expect((sanitized.nested as Record<string, unknown>).authorization).toBe("[REDACTED]");
   });

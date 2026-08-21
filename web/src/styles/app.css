@@ -565,6 +565,79 @@ input {
   text-decoration: underline;
 }
 
+.execution-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid #334155;
+}
+
+.execution-status-planned,
+.summary-count-card.execution-status-planned {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.execution-status-dry_run,
+.summary-count-card.execution-status-dry_run {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.execution-status-executed,
+.summary-count-card.execution-status-executed {
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.execution-status-blocked,
+.summary-count-card.execution-status-blocked {
+  background: rgba(234, 179, 8, 0.12);
+}
+
+.execution-status-failed,
+.summary-count-card.execution-status-failed {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.execution-status-approved {
+  background: rgba(45, 212, 191, 0.12);
+}
+
+.execution-status-skipped,
+.execution-status-unknown {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.execution-status-border-planned {
+  border-left: 4px solid rgba(148, 163, 184, 0.85);
+}
+
+.execution-status-border-dry_run {
+  border-left: 4px solid rgba(59, 130, 246, 0.85);
+}
+
+.execution-status-border-executed {
+  border-left: 4px solid rgba(34, 197, 94, 0.85);
+}
+
+.execution-status-border-blocked {
+  border-left: 4px solid rgba(234, 179, 8, 0.85);
+}
+
+.execution-status-border-failed {
+  border-left: 4px solid rgba(239, 68, 68, 0.85);
+}
+
+.execution-status-border-approved {
+  border-left: 4px solid rgba(45, 212, 191, 0.85);
+}
+
+.execution-status-border-skipped,
+.execution-status-border-unknown {
+  border-left: 4px solid rgba(148, 163, 184, 0.85);
+}
+
 @keyframes skeleton-shimmer {
   0% {
     background-position: 200% 0;
