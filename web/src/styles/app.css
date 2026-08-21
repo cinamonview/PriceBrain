@@ -489,6 +489,82 @@ input {
   height: 160px;
 }
 
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid #334155;
+}
+
+.priority-critical,
+.summary-count-card.priority-critical {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.priority-high,
+.summary-count-card.priority-high {
+  background: rgba(249, 115, 22, 0.12);
+}
+
+.priority-medium,
+.summary-count-card.priority-medium {
+  background: rgba(234, 179, 8, 0.12);
+}
+
+.priority-low,
+.summary-count-card.priority-low {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.priority-unknown {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.priority-border-critical {
+  border-left: 4px solid rgba(239, 68, 68, 0.85);
+}
+
+.priority-border-high {
+  border-left: 4px solid rgba(249, 115, 22, 0.85);
+}
+
+.priority-border-medium {
+  border-left: 4px solid rgba(234, 179, 8, 0.85);
+}
+
+.priority-border-low {
+  border-left: 4px solid rgba(59, 130, 246, 0.85);
+}
+
+.remediation-policy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #1f2937;
+  background: #111827;
+}
+
+.action-card-links {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.action-card-links a {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+.action-card-links a:hover {
+  text-decoration: underline;
+}
+
 @keyframes skeleton-shimmer {
   0% {
     background-position: 200% 0;

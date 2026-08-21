@@ -1,4 +1,4 @@
-export function InvestigationLoadingSkeleton() {
+export function RemediationLoadingSkeleton() {
   return (
     <div className="page-stack investigation-loading" aria-busy="true" aria-live="polite">
       <div className="skeleton-block skeleton-title" />
@@ -13,4 +13,8 @@ export function InvestigationLoadingSkeleton() {
       ))}
     </div>
   );
+}
+
+export function InvestigationLoadingSkeleton() {
+  return <RemediationLoadingSkeleton />;
 }
