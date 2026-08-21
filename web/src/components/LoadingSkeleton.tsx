@@ -15,6 +15,10 @@ export function RemediationLoadingSkeleton() {
   );
 }
 
+export function CommandCenterLoadingSkeleton() {
+  return <RemediationLoadingSkeleton />;
+}
+
 export function AuditLoadingSkeleton() {
   return <RemediationLoadingSkeleton />;
 }

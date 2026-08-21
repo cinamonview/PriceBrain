@@ -698,6 +698,126 @@ input {
   font-size: 0.9rem;
 }
 
+.command-center-page .page-header {
+  margin-bottom: 0;
+}
+
+.command-center-overview .health-grid {
+  margin-top: 1rem;
+}
+
+.command-center-health-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.command-center-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.command-center-detail-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.command-center-area-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.command-center-area-card .health-badge {
+  padding: 0.5rem 0.75rem;
+}
+
+.command-center-status-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+  color: #cbd5e1;
+}
+
+.read-error-banner {
+  color: #fca5a5;
+  margin: 0 0 0.75rem;
+}
+
+.command-center-failure-panel .failure-groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.failure-group-critical {
+  border-left: 4px solid rgba(239, 68, 68, 0.85);
+  padding-left: 0.75rem;
+}
+
+.failure-group-error {
+  border-left: 4px solid rgba(249, 115, 22, 0.85);
+  padding-left: 0.75rem;
+}
+
+.failure-group-warning {
+  border-left: 4px solid rgba(234, 179, 8, 0.85);
+  padding-left: 0.75rem;
+}
+
+.command-center-finding-row {
+  align-items: start;
+}
+
+.command-center-finding-row .finding-message {
+  margin: 0.35rem 0;
+}
+
+.finding-meta-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.compact-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.compact-list li {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #1f2937;
+}
+
+.compact-list li:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 1200px) {
+  .command-center-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .command-center-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .command-center-grid,
+  .command-center-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @keyframes skeleton-shimmer {
   0% {
     background-position: 200% 0;
