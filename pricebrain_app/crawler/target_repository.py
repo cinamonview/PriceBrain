@@ -12,6 +12,7 @@ from pricebrain_app.crawler.targets import (
     CRAWL_STATUS_IDLE,
     CrawlTarget,
     build_target_id,
+    derive_external_product_id,
     parse_datetime,
     utc_now,
     validate_target_url,
@@ -70,6 +71,88 @@ class CrawlTargetRepository:
             raise RuntimeError(f"Failed to upsert crawl target: {target_id}")
         return saved
 
+    def merge_catalog(
+        self,
+        *,
+        mall_id: str,
+        product_url: str,
+        enabled: bool = True,
+        crawl_interval_seconds: int | None = None,
+        product_name: str | None = None,
+        category: str | None = None,
+        tags: list[str] | None = None,
+        priority: int | None = None,
+        external_product_id: str | None = None,
+        now: datetime | None = None,
+    ) -> tuple[CrawlTarget, bool]:
+        """Register or update catalog metadata without touching operational crawl state."""
+        cleaned_url = validate_target_url(mall_id, product_url)
+        target_id = build_target_id(mall_id, cleaned_url)
+        current = self.get(target_id)
+        run_at = now or utc_now()
+        normalized_mall = mall_id.strip().lower()
+        derived_external_id = external_product_id or derive_external_product_id(
+            normalized_mall,
+            cleaned_url,
+        )
+        normalized_category = category.strip().lower() if category else None
+        normalized_tags = [item.strip() for item in (tags or []) if item.strip()]
+        normalized_priority = int(priority) if priority is not None else None
+
+        payload: dict[str, Any] = {
+            "target_id": target_id,
+            "mall_id": normalized_mall,
+            "product_url": cleaned_url,
+            "enabled": enabled,
+            "external_product_id": derived_external_id,
+            "product_name": product_name,
+            "category": normalized_category,
+            "tags": normalized_tags,
+            "updated_at": run_at,
+        }
+        if crawl_interval_seconds is not None:
+            payload["crawl_interval_seconds"] = int(crawl_interval_seconds)
+        if normalized_priority is not None:
+            payload["priority"] = normalized_priority
+
+        created = current is None
+        if created:
+            payload["created_at"] = run_at
+            payload["next_crawl_at"] = run_at
+        elif current.next_crawl_at is None:
+            payload["next_crawl_at"] = run_at
+
+        self._db.collection(CRAWLER_TARGETS_COLLECTION).document(target_id).set(
+            payload,
+            merge=True,
+        )
+        saved = self.get(target_id)
+        if saved is None:
+            raise RuntimeError(f"Failed to merge crawl target catalog entry: {target_id}")
+        return saved, created
+
+    def bulk_set_enabled(
+        self,
+        *,
+        enabled: bool,
+        mall_id: str | None = None,
+        category: str | None = None,
+        tag: str | None = None,
+        now: datetime | None = None,
+    ) -> int:
+        """Enable or disable targets matching filters — configuration only."""
+        run_at = now or utc_now()
+        updated = 0
+        for target in self.list_all(mall_id=mall_id, category=category, tag=tag):
+            if target.enabled == enabled:
+                continue
+            self._db.collection(CRAWLER_TARGETS_COLLECTION).document(target.target_id).set(
+                {"enabled": enabled, "updated_at": run_at},
+                merge=True,
+            )
+            updated += 1
+        return updated
+
     def list_enabled(
         self,
         *,
@@ -82,6 +165,8 @@ class CrawlTargetRepository:
         *,
         mall_id: str | None = None,
         enabled: bool | None = None,
+        category: str | None = None,
+        tag: str | None = None,
     ) -> list[CrawlTarget]:
         targets: list[CrawlTarget] = []
         for doc in self._db.collection(CRAWLER_TARGETS_COLLECTION).stream():
@@ -91,8 +176,14 @@ class CrawlTargetRepository:
                 continue
             if mall_id is not None and target.mall_id != mall_id.strip().lower():
                 continue
+            if category is not None and target.category != category.strip().lower():
+                continue
+            if tag is not None and tag.strip().lower() not in {
+                item.lower() for item in target.tags
+            }:
+                continue
             targets.append(target)
-        return sorted(targets, key=lambda item: item.target_id)
+        return sorted(targets, key=lambda item: (-item.priority, item.target_id))
 
     def list_due(
         self,
@@ -115,7 +206,7 @@ class CrawlTargetRepository:
         for target in self.list_enabled(mall_id=mall_id):
             if target.next_crawl_at is None or target.next_crawl_at <= now:
                 due.append(target)
-        return sorted(due, key=lambda item: item.target_id)
+        return sorted(due, key=lambda item: (-item.priority, item.target_id))
 
     def try_claim(
         self,

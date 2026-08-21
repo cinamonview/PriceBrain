@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from pricebrain_app.crawler.malls.ssg import extract_ssg_item_id, validate_ssg_product_url
 
 CRAWLER_TARGETS_COLLECTION = "crawler_targets"
 DEFAULT_CRAWL_INTERVAL_SECONDS = 3600
+DEFAULT_TARGET_PRIORITY = 50
 CRAWL_STATUS_IDLE = "idle"
 CRAWL_STATUS_CLAIMED = "claimed"
 
@@ -37,6 +38,11 @@ class CrawlTarget:
     product_url: str
     enabled: bool = True
     crawl_interval_seconds: int = DEFAULT_CRAWL_INTERVAL_SECONDS
+    external_product_id: str | None = None
+    product_name: str | None = None
+    category: str | None = None
+    tags: list[str] = field(default_factory=list)
+    priority: int = DEFAULT_TARGET_PRIORITY
     last_crawled_at: datetime | None = None
     next_crawl_at: datetime | None = None
     last_status: str | None = None
@@ -70,6 +76,11 @@ class CrawlTarget:
             "product_url": self.product_url,
             "enabled": self.enabled,
             "crawl_interval_seconds": int(self.crawl_interval_seconds),
+            "external_product_id": self.external_product_id,
+            "product_name": self.product_name,
+            "category": self.category,
+            "tags": list(self.tags),
+            "priority": int(self.priority),
             "last_crawled_at": self.last_crawled_at,
             "next_crawl_at": self.next_crawl_at,
             "last_status": self.last_status,
@@ -94,6 +105,11 @@ class CrawlTarget:
             crawl_interval_seconds=int(
                 data.get("crawl_interval_seconds", DEFAULT_CRAWL_INTERVAL_SECONDS)
             ),
+            external_product_id=_optional_str(data.get("external_product_id")),
+            product_name=_optional_str(data.get("product_name")),
+            category=_optional_str(data.get("category")),
+            tags=_parse_tags(data.get("tags")),
+            priority=int(data.get("priority", DEFAULT_TARGET_PRIORITY)),
             last_crawled_at=parse_datetime(data.get("last_crawled_at")),
             next_crawl_at=parse_datetime(data.get("next_crawl_at")),
             last_status=data.get("last_status"),
@@ -110,6 +126,38 @@ class CrawlTarget:
             created_at=parse_datetime(data.get("created_at")),
             updated_at=parse_datetime(data.get("updated_at")),
         )
+
+
+def _optional_str(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _parse_tags(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        text = value.strip()
+        return [text] if text else []
+    if isinstance(value, (list, tuple, set)):
+        tags: list[str] = []
+        for item in value:
+            text = str(item).strip()
+            if text:
+                tags.append(text)
+        return tags
+    return []
+
+
+def derive_external_product_id(mall_id: str, product_url: str) -> str | None:
+    """Derive a mall-specific external product ID from a validated product URL."""
+    mall = mall_id.strip().lower()
+    cleaned_url = validate_target_url(mall, product_url)
+    if mall == "ssg":
+        return extract_ssg_item_id(cleaned_url)
+    return None
 
 
 def validate_target_url(mall_id: str, url: str) -> str:

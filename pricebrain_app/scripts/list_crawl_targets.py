@@ -18,6 +18,8 @@ from pricebrain_app.crawler.operations_view import TargetListFilter
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="List crawl targets.")
     parser.add_argument("--mall", help="Filter by mall_id")
+    parser.add_argument("--category", help="Filter by category")
+    parser.add_argument("--tag", help="Filter by tag")
     parser.add_argument("--enabled", action="store_true", help="Show enabled targets only")
     parser.add_argument("--disabled", action="store_true", help="Show disabled targets only")
     parser.add_argument("--due", action="store_true", help="Show due targets only")
@@ -41,6 +43,8 @@ def main(argv: list[str] | None = None) -> int:
             filters=TargetListFilter(
                 mall_id=args.mall,
                 enabled=enabled,
+                category=args.category,
+                tag=args.tag,
                 due_only=args.due,
                 failed_only=args.failed,
             )

@@ -28,6 +28,11 @@ class TargetOperationalView:
     product_url: str
     enabled: bool
     crawl_interval_seconds: int
+    external_product_id: str | None
+    product_name: str | None
+    category: str | None
+    tags: tuple[str, ...]
+    priority: int
     crawl_status: str
     lease_owner: str | None
     lease_until: datetime | None
@@ -51,6 +56,11 @@ class TargetOperationalView:
             "product_url": self.product_url,
             "enabled": self.enabled,
             "crawl_interval_seconds": self.crawl_interval_seconds,
+            "external_product_id": self.external_product_id,
+            "product_name": self.product_name,
+            "category": self.category,
+            "tags": list(self.tags),
+            "priority": self.priority,
             "crawl_status": self.crawl_status,
             "lease_owner": self.lease_owner,
             "lease_until": _iso(self.lease_until),

@@ -30,6 +30,8 @@ from pricebrain_app.repository.listing_repository import build_listing_document_
 class TargetListFilter:
     mall_id: str | None = None
     enabled: bool | None = None
+    category: str | None = None
+    tag: str | None = None
     due_only: bool = False
     failed_only: bool = False
 
@@ -60,6 +62,11 @@ def build_target_view(target: CrawlTarget, *, now: datetime | None = None) -> Ta
         product_url=safe_url_for_log(target.product_url),
         enabled=target.enabled,
         crawl_interval_seconds=target.crawl_interval_seconds,
+        external_product_id=target.external_product_id,
+        product_name=target.product_name,
+        category=target.category,
+        tags=tuple(target.tags),
+        priority=target.priority,
         crawl_status=target.crawl_status,
         lease_owner=target.lease_owner,
         lease_until=target.lease_until,
@@ -93,7 +100,12 @@ class CrawlerOperationsView:
     ) -> list[TargetOperationalView]:
         run_at = now or utc_now()
         flt = filters or TargetListFilter()
-        raw = self._targets.list_all(mall_id=flt.mall_id, enabled=flt.enabled)
+        raw = self._targets.list_all(
+            mall_id=flt.mall_id,
+            enabled=flt.enabled,
+            category=flt.category,
+            tag=flt.tag,
+        )
         views = [build_target_view(target, now=run_at) for target in raw]
         if flt.due_only:
             views = [view for view in views if view.is_due]

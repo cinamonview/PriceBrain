@@ -59,9 +59,13 @@ def format_target_list(targets: list[TargetOperationalView]) -> str:
     lines = ["Crawl Targets", ""]
     for target in targets:
         status = target.last_status or "-"
+        catalog = ""
+        if target.category or target.tags:
+            tag_text = ",".join(target.tags) if target.tags else "-"
+            catalog = f" category={target.category or '-'} tags={tag_text}"
         lines.append(
             f"{target.target_id} [{target.operational_state}] mall={target.mall_id} "
-            f"last={status} next={_fmt_dt(target.next_crawl_at)}"
+            f"last={status} next={_fmt_dt(target.next_crawl_at)}{catalog}"
         )
     return "\n".join(lines)
 
@@ -104,6 +108,12 @@ def format_target_detail(
         target.product_url,
         "",
         f"Interval: {target.crawl_interval_seconds} sec",
+        f"Priority: {target.priority}",
+        "",
+        "Catalog:",
+        f"  name: {target.product_name or '-'}",
+        f"  category: {target.category or '-'}",
+        f"  tags: {', '.join(target.tags) if target.tags else '-'}",
         "",
         "Last crawl:",
         _fmt_dt(target.last_crawled_at),
