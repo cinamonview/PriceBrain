@@ -14,6 +14,12 @@ from pricebrain_app.crawler.ops_models import (
     TargetOperationalView,
     WorkerHealthSnapshot,
 )
+from pricebrain_app.crawler.price_ops_models import (
+    GpuPriceStatusSummary,
+    PriceHistoryEntryView,
+    PriceSnapshot,
+    PriceSummary,
+)
 from pricebrain_app.crawler.targets import utc_now
 
 
@@ -199,3 +205,74 @@ def format_worker_health(health: WorkerHealthSnapshot) -> str:
             f"last_cycle_error: {health.last_cycle_error or '-'}",
         ]
     )
+
+
+def format_gpu_price_status(summary: GpuPriceStatusSummary) -> str:
+    lines = [
+        "GPU Price Status",
+        "",
+        f"targets: {summary.targets}",
+        f"with_price: {summary.with_price}",
+        f"without_price: {summary.without_price}",
+        "",
+        f"price_down: {summary.price_down}",
+        f"price_up: {summary.price_up}",
+        f"unchanged: {summary.unchanged}",
+        f"no_history: {summary.no_history}",
+    ]
+    if summary.invalid_price:
+        lines.append(f"invalid_price: {summary.invalid_price}")
+    if summary.average_current_price is not None:
+        lines.extend(
+            [
+                "",
+                f"average_current_price: {summary.average_current_price:,.2f}",
+                f"lowest_current_price: {_fmt_price(summary.lowest_current_price)}",
+                f"highest_current_price: {_fmt_price(summary.highest_current_price)}",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def format_price_summary_list(summaries: list[PriceSummary], *, title: str) -> str:
+    if not summaries:
+        return f"{title}\n\nNo matching price observations."
+    lines = [title, ""]
+    for item in summaries:
+        lines.extend(
+            [
+                f"{item.target_id} ({item.product_name or '-'})",
+                f"  current: {_fmt_price(item.current_price)}",
+                f"  previous: {_fmt_price(item.previous_price)}",
+                f"  change: {_fmt_price(item.price_change)} ({item.price_change_percent or '-'}%)",
+                f"  classification: {item.classification.value}",
+                f"  observed_at: {_fmt_dt(item.observed_at)}",
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip()
+
+
+def format_price_snapshot(snapshot: PriceSnapshot) -> str:
+    return "\n".join(
+        [
+            f"Target: {snapshot.target_id}",
+            f"Product: {snapshot.product_name or '-'}",
+            f"Listing: {snapshot.listing_id or '-'}",
+            "",
+            f"Current price: {_fmt_price(snapshot.price)}",
+            f"Previous price: {_fmt_price(snapshot.previous_price)}",
+            f"Change: {_fmt_price(snapshot.price_change)} ({snapshot.price_change_percent or '-'}%)",
+            f"Classification: {snapshot.classification.value}",
+            f"Observed at: {_fmt_dt(snapshot.observed_at)}",
+        ]
+    )
+
+
+def format_price_history(entries: list[PriceHistoryEntryView]) -> str:
+    if not entries:
+        return "Price History\n\nNo price history found."
+    lines = ["Price History", "", "observed_at             price"]
+    for entry in entries:
+        lines.append(f"{_fmt_dt(entry.observed_at):<23} {_fmt_price(entry.price)}")
+    return "\n".join(lines)
