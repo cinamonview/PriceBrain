@@ -146,9 +146,13 @@ class PriceAlertService:
         *,
         now: datetime | None = None,
         dispatch_notifications: bool | None = None,
+        dry_run: bool = False,
+        max_alerts: int | None = None,
     ) -> tuple[list[AlertEvaluationResult], AlertCheckSummary, list[NotificationSendResult]]:
         run_at = now or utc_now()
         enabled = self._alerts.list_enabled()
+        if max_alerts is not None:
+            enabled = enabled[: max(int(max_alerts), 0)]
         results: list[AlertEvaluationResult] = []
         notifications: list[NotificationSendResult] = []
         summary = AlertCheckSummary(
@@ -159,7 +163,7 @@ class PriceAlertService:
             invalid=0,
             failed=0,
         )
-        should_dispatch = self._should_dispatch_notifications(dispatch_notifications)
+        should_dispatch = False if dry_run else self._should_dispatch_notifications(dispatch_notifications)
 
         for alert in enabled:
             try:
@@ -180,9 +184,14 @@ class PriceAlertService:
                     summary = _increment_summary(summary, result.outcome)
                     continue
 
-                alert = _reset_duplicate_state_if_price_changed(self._alerts, alert, snapshot)
+                if not dry_run:
+                    alert = _reset_duplicate_state_if_price_changed(self._alerts, alert, snapshot)
                 result = evaluate_alert(alert, snapshot, now=run_at)
-                if result.outcome is AlertEvaluationOutcome.TRIGGERED and is_valid_price(result.current_price):
+                if (
+                    not dry_run
+                    and result.outcome is AlertEvaluationOutcome.TRIGGERED
+                    and is_valid_price(result.current_price)
+                ):
                     self._alerts.mark_triggered(
                         alert.alert_id,
                         observed_price=int(result.current_price),

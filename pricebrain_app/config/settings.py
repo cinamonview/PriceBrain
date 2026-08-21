@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     pricebrain_notification_default_channel: str = Field(
         default="console", alias="PRICEBRAIN_NOTIFICATION_DEFAULT_CHANNEL"
     )
+    pricebrain_alert_runner_interval_seconds: float = Field(
+        default=60.0, alias="PRICEBRAIN_ALERT_RUNNER_INTERVAL"
+    )
 
     @property
     def firebase_configured(self) -> bool:
