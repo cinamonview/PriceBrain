@@ -129,7 +129,9 @@ def test_d1a_07_production_style_rejects_when_api_key_missing(
     sample_raw_product: dict,
 ) -> None:
     monkeypatch.delenv("PRICEBRAIN_INGEST_API_KEY", raising=False)
+    monkeypatch.setenv("PRICEBRAIN_INGEST_API_KEY", "")
     monkeypatch.delenv("FIRESTORE_EMULATOR_HOST", raising=False)
+    monkeypatch.setenv("FIRESTORE_EMULATOR_HOST", "")
     monkeypatch.setenv("FIREBASE_PROJECT_ID", "production-project")
     monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", "/secrets/sa.json")
     clear_settings_cache()

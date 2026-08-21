@@ -68,6 +68,18 @@ def seed_gpu_master(db: FirestoreClient) -> None:
     repo.seed_partners(BOARD_PARTNERS)
 
 
+def ensure_gpu_master_seeded(db: FirestoreClient) -> None:
+    """Bootstrap GPU master catalog when reference documents are missing.
+
+    Uses board_partners/ZOTAC as the bootstrap sentinel (C-3 seed SSOT).
+    Idempotent merge upsert — does not bypass master validation.
+    """
+    repo = GpuRepository(db)
+    if repo.get_partner("ZOTAC") is not None:
+        return
+    seed_gpu_master(db)
+
+
 def require_emulator_for_seed() -> None:
     """Refuse to seed unless Firestore Emulator is configured."""
     if not os.environ.get("FIRESTORE_EMULATOR_HOST"):

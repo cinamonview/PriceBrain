@@ -6,6 +6,7 @@ from typing import Any
 
 from google.cloud.firestore_v1 import Client as FirestoreClient
 
+from pricebrain_app.repository.gpu_master_seed import ensure_gpu_master_seeded
 from pricebrain_app.repository.listing_repository import ListingRepository
 from pricebrain_app.repository.price_history_repository import PriceHistoryRepository
 from pricebrain_app.repository.product_repository import ProductRepository
@@ -19,6 +20,8 @@ def save_validated_product(
 ) -> dict[str, str | bool]:
     """Persist ValidatedProduct via Repository layer (09 only — not 07/08)."""
     validate_for_persist(data)
+
+    ensure_gpu_master_seeded(db)
 
     reference_repo = ReferenceRepository(db)
     product_repo = ProductRepository(db)

@@ -6,7 +6,11 @@ from pathlib import Path
 import pytest
 
 from pricebrain_app.crawler.parser.price import parse_price_attribute, parse_price_text
-from pricebrain_app.crawler.parser.ssg import parse_ssg_product_html, parse_ssg_search_html
+from pricebrain_app.crawler.parser.ssg import (
+    parse_ssg_product_detail_html,
+    parse_ssg_product_html,
+    parse_ssg_search_html,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -64,3 +68,20 @@ def test_parse_ssg_search_html_skips_invalid_units(ssg_incomplete_html: str) -> 
 
 def test_parse_ssg_search_html_empty_page() -> None:
     assert parse_ssg_search_html("<html><body></body></html>") == []
+
+
+def test_parse_ssg_product_detail_html_extracts_fields() -> None:
+    html = (
+        Path(__file__).parent / "fixtures" / "ssg" / "product_detail_gpu.html"
+    ).read_text(encoding="utf-8")
+    fixed_time = datetime(2026, 8, 21, 12, 0, 0, tzinfo=timezone.utc)
+    item = parse_ssg_product_detail_html(
+        html,
+        product_url="https://www.ssg.com/item/itemView.ssg?itemId=1000832367906",
+        crawled_at=fixed_time,
+    )
+    assert item is not None
+    assert item["product_id"] == "1000832367906"
+    assert item["price"] == 1_599_000
+    assert item["seller"] == "히트정보"
+    assert item["crawled_at"] == fixed_time

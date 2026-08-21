@@ -22,6 +22,34 @@ class Settings(BaseSettings):
     pricebrain_ingest_api_key: str = Field(
         default="", alias="PRICEBRAIN_INGEST_API_KEY"
     )
+    pricebrain_ingest_api_url: str = Field(
+        default="http://127.0.0.1:8000", alias="PRICEBRAIN_INGEST_API_URL"
+    )
+    pricebrain_test_ssg_url: str = Field(default="", alias="PRICEBRAIN_TEST_SSG_URL")
+    pricebrain_crawler_timeout_seconds: float = Field(
+        default=15.0, alias="PRICEBRAIN_CRAWLER_TIMEOUT_SECONDS"
+    )
+    pricebrain_crawler_max_retries: int = Field(
+        default=2, alias="PRICEBRAIN_CRAWLER_MAX_RETRIES"
+    )
+    pricebrain_crawler_backoff_seconds: str = Field(
+        default="", alias="PRICEBRAIN_CRAWLER_BACKOFF_SECONDS"
+    )
+    pricebrain_crawler_request_interval_seconds: float = Field(
+        default=0.0, alias="PRICEBRAIN_CRAWLER_REQUEST_INTERVAL_SECONDS"
+    )
+    pricebrain_crawler_worker_enabled: bool = Field(
+        default=True, alias="PRICEBRAIN_CRAWLER_WORKER_ENABLED"
+    )
+    pricebrain_crawler_poll_interval_seconds: float = Field(
+        default=60.0, alias="PRICEBRAIN_CRAWLER_POLL_INTERVAL_SECONDS"
+    )
+    pricebrain_crawler_max_targets_per_cycle: int = Field(
+        default=10, alias="PRICEBRAIN_CRAWLER_MAX_TARGETS_PER_CYCLE"
+    )
+    pricebrain_crawler_lease_seconds: int = Field(
+        default=300, alias="PRICEBRAIN_CRAWLER_LEASE_SECONDS"
+    )
 
     @property
     def firebase_configured(self) -> bool:

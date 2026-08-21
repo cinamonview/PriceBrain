@@ -122,7 +122,37 @@ def validated_product() -> dict:
     return dict(run_pipeline(raw))
 
 
-def test_c3_save_validated_product_uses_master_references(
+def test_c3_08_save_bootstraps_missing_gpu_master(validated_product: dict) -> None:
+    db = FakeFirestoreClient()
+    assert GpuRepository(db).get_partner("ZOTAC") is None
+
+    result = save_validated_product(db, validated_product)
+
+    assert GpuRepository(db).get_partner("ZOTAC") is not None
+    product = db.get_document(f"{c.PRODUCTS}/{result['product_id']}")
+    assert product is not None
+    assert product["board_partner_id"] == "ZOTAC"
+
+
+def test_c3_09_user_ingest_payload_bootstraps_zotac_master() -> None:
+    raw = {
+        "product_id": "test-rtx5080-001",
+        "product_name": "ZOTAC GAMING GeForce RTX 5080 16GB",
+        "mall_id": "ssg",
+        "product_url": "https://example.com/products/test-rtx5080",
+        "price": 1599000,
+        "seller": "PriceBrain Test",
+    }
+    validated = run_pipeline(raw)
+    assert validated["board_partner_id"] == "ZOTAC"
+
+    db = FakeFirestoreClient()
+    result = save_validated_product(db, dict(validated))
+    assert result["listing_id"] == "SSG_test-rtx5080-001"
+    assert db.get_document(f"{c.BOARD_PARTNERS}/ZOTAC") is not None
+
+
+def test_c3_10_save_validated_product_uses_master_references(
     fake_db: FakeFirestoreClient, validated_product: dict
 ) -> None:
     result = save_validated_product(fake_db, validated_product)

@@ -16,6 +16,7 @@ build/
 *.egg-info/
 
 # Firebase / Google Cloud secrets
+secrets/
 serviceAccount*.json
 *-firebase-adminsdk-*.json
 

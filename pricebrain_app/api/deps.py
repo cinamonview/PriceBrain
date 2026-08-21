@@ -4,13 +4,20 @@ from __future__ import annotations
 
 import secrets
 from collections.abc import Generator
-from typing import Annotated
 
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, HTTPException, Request, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from google.cloud.firestore_v1 import Client as FirestoreClient
 
 from pricebrain_app.config.settings import get_settings
 from pricebrain_app.firebase.admin import get_firestore_client
+
+# OpenAPI / Swagger Authorize — sends Authorization: Bearer <token>
+bearer_scheme = HTTPBearer(
+    auto_error=False,
+    scheme_name="IngestAPIKey",
+    description="PRICEBRAIN_INGEST_API_KEY from .env (Bearer token)",
+)
 
 
 def get_firestore() -> Generator[FirestoreClient, None, None]:
@@ -24,7 +31,8 @@ def get_firestore() -> Generator[FirestoreClient, None, None]:
 
 
 def require_ingest_api_key(
-    authorization: Annotated[str | None, Header()] = None,
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
 ) -> None:
     """Server-to-server ingest auth via Bearer token.
 
@@ -39,21 +47,38 @@ def require_ingest_api_key(
             detail="Ingest API is not configured",
         )
 
-    if authorization is None:
+    auth_header = request.headers.get("Authorization")
+    if credentials is None:
+        if auth_header is not None and auth_header.strip():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Authorization header",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing Authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token.strip():
+    if credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if not secrets.compare_digest(token.strip(), configured_key):
+    token = credentials.credentials.strip()
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not secrets.compare_digest(token, configured_key):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
         )
