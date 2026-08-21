@@ -59,6 +59,8 @@ class Settings(BaseSettings):
     pricebrain_alert_runner_interval_seconds: float = Field(
         default=60.0, alias="PRICEBRAIN_ALERT_RUNNER_INTERVAL"
     )
+    pricebrain_auth_enabled: bool = Field(default=True, alias="PRICEBRAIN_AUTH_ENABLED")
+    pricebrain_auth_emulator: bool = Field(default=False, alias="PRICEBRAIN_AUTH_EMULATOR")
 
     @property
     def firebase_configured(self) -> bool:

@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 from pricebrain_app.config.settings import Settings, get_settings
 from pricebrain_app.crawler.logging_utils import get_crawler_logger
+from pricebrain_app.crawler.alert_ops_health_store import record_alert_ops_cycle
 from pricebrain_app.crawler.notification_models import NotificationSendStatus
 from pricebrain_app.crawler.price_alert_runner_events import log_price_alert_runner_event
 from pricebrain_app.crawler.price_alert_service import AlertCheckSummary, PriceAlertService
@@ -130,7 +131,7 @@ class PriceAlertRunner:
                 "price_alert_runner.alert_failed",
                 message=message,
             )
-            return PriceAlertRunnerCycleResult(
+            failed_cycle = PriceAlertRunnerCycleResult(
                 cycle_started_at=started_at,
                 cycle_finished_at=finished_at,
                 total_alerts=0,
@@ -145,6 +146,8 @@ class PriceAlertRunner:
                 dry_run=dry_run,
                 shutdown_requested=self._shutdown.should_stop,
             )
+            record_alert_ops_cycle(failed_cycle)
+            return failed_cycle
 
         notification_sent = sum(
             1 for item in notifications if item.status is NotificationSendStatus.SENT
@@ -188,6 +191,7 @@ class PriceAlertRunner:
             notification_failed=cycle.notification_failed,
             dry_run=dry_run,
         )
+        record_alert_ops_cycle(cycle, results=results, notifications=notifications)
         return cycle
 
     def run_forever(
