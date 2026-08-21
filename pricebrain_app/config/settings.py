@@ -50,6 +50,12 @@ class Settings(BaseSettings):
     pricebrain_crawler_lease_seconds: int = Field(
         default=300, alias="PRICEBRAIN_CRAWLER_LEASE_SECONDS"
     )
+    pricebrain_notification_enabled: bool = Field(
+        default=False, alias="PRICEBRAIN_NOTIFICATION_ENABLED"
+    )
+    pricebrain_notification_default_channel: str = Field(
+        default="console", alias="PRICEBRAIN_NOTIFICATION_DEFAULT_CHANNEL"
+    )
 
     @property
     def firebase_configured(self) -> bool:

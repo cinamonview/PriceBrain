@@ -241,10 +241,10 @@ def test_retrigger_after_price_change(
         now=NOW,
     )
 
-    first, _ = alert_service.check_enabled_alerts(now=NOW)
+    first, _, _ = alert_service.check_enabled_alerts(now=NOW)
     assert first[0].outcome is AlertEvaluationOutcome.TRIGGERED
 
-    second, summary = alert_service.check_enabled_alerts(now=NOW)
+    second, summary, _ = alert_service.check_enabled_alerts(now=NOW)
     assert second[0].outcome is AlertEvaluationOutcome.SKIPPED
     assert summary.skipped == 1
 
@@ -258,7 +258,7 @@ def test_retrigger_after_price_change(
     )
     alert_db.collection(c.LISTINGS).document(LISTING_ID).set({"current_price": 1_600_000}, merge=True)
 
-    intermediate, _ = alert_service.check_enabled_alerts(now=NOW.replace(hour=13))
+    intermediate, _, _ = alert_service.check_enabled_alerts(now=NOW.replace(hour=13))
     assert intermediate[0].outcome is AlertEvaluationOutcome.NOT_TRIGGERED
 
     alert_db.collection(c.LISTINGS).document(LISTING_ID).set({"current_price": 1_490_000}, merge=True)
@@ -271,7 +271,7 @@ def test_retrigger_after_price_change(
         }
     )
 
-    third, summary = alert_service.check_enabled_alerts(now=NOW.replace(hour=14))
+    third, summary, _ = alert_service.check_enabled_alerts(now=NOW.replace(hour=14))
     assert third[0].outcome is AlertEvaluationOutcome.TRIGGERED
     assert summary.triggered == 1
 
@@ -300,7 +300,7 @@ def test_no_history_snapshot_invalid(
         next_crawl_at=NOW,
         crawled_at=NOW,
     )
-    results, summary = alert_service.check_enabled_alerts(now=NOW)
+    results, summary, _ = alert_service.check_enabled_alerts(now=NOW)
     assert results[0].outcome is AlertEvaluationOutcome.INVALID
     assert summary.invalid == 1
 
@@ -335,7 +335,7 @@ def test_failure_isolation_between_targets(
         now=NOW,
     )
 
-    results, summary = alert_service.check_enabled_alerts(now=NOW)
+    results, summary, _ = alert_service.check_enabled_alerts(now=NOW)
     assert summary.total == 2
     assert summary.triggered == 1
     assert summary.invalid == 1

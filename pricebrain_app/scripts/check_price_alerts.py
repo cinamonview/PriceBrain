@@ -16,7 +16,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         service = build_price_alert_service()
-        results, summary = service.check_enabled_alerts()
+        results, summary, notifications = service.check_enabled_alerts()
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -24,16 +24,17 @@ def main(argv: list[str] | None = None) -> int:
     payload = {
         "summary": summary.to_dict(),
         "results": [item.to_dict() for item in results],
+        "notifications": [item.to_dict() for item in notifications],
     }
     if args.json:
         print_json(payload, secrets=collect_secrets_for_redaction())
         return 0
 
-    print(format_check_results(summary, results))
+    print(format_check_results(summary, results, notifications))
     return 0
 
 
-def format_check_results(summary, results) -> str:
+def format_check_results(summary, results, notifications) -> str:
     lines = [
         "Price Alert Check",
         "",
@@ -43,6 +44,7 @@ def format_check_results(summary, results) -> str:
         f"skipped: {summary.skipped}",
         f"invalid: {summary.invalid}",
         f"failed: {summary.failed}",
+        f"notifications: {len(notifications)}",
     ]
     if results:
         lines.extend(["", "Results:"])

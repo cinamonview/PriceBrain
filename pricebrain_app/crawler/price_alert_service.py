@@ -8,6 +8,18 @@ from datetime import datetime
 from typing import Any
 
 from pricebrain_app.crawler.logging_utils import get_crawler_logger
+from pricebrain_app.crawler.notification_builder import build_notification_event
+from pricebrain_app.crawler.notification_dispatcher import (
+    NotificationDispatcher,
+    notifications_enabled,
+    resolve_default_channel,
+)
+from pricebrain_app.crawler.notification_events import log_notification_event
+from pricebrain_app.crawler.notification_models import (
+    NotificationChannel,
+    NotificationSendResult,
+    NotificationSendStatus,
+)
 from pricebrain_app.crawler.price_alert_events import log_price_alert_event
 from pricebrain_app.crawler.price_alert_models import (
     AlertEvaluationOutcome,
@@ -118,14 +130,27 @@ class PriceAlertService:
         self,
         alert_repository: PriceAlertRepository,
         price_operations_view: PriceOperationsView,
+        *,
+        notification_dispatcher: NotificationDispatcher | None = None,
+        default_channel: NotificationChannel | None = None,
+        notifications_enabled_override: bool | None = None,
     ) -> None:
         self._alerts = alert_repository
         self._prices = price_operations_view
+        self._dispatcher = notification_dispatcher
+        self._default_channel = default_channel
+        self._notifications_enabled_override = notifications_enabled_override
 
-    def check_enabled_alerts(self, *, now: datetime | None = None) -> tuple[list[AlertEvaluationResult], AlertCheckSummary]:
+    def check_enabled_alerts(
+        self,
+        *,
+        now: datetime | None = None,
+        dispatch_notifications: bool | None = None,
+    ) -> tuple[list[AlertEvaluationResult], AlertCheckSummary, list[NotificationSendResult]]:
         run_at = now or utc_now()
         enabled = self._alerts.list_enabled()
         results: list[AlertEvaluationResult] = []
+        notifications: list[NotificationSendResult] = []
         summary = AlertCheckSummary(
             total=len(enabled),
             triggered=0,
@@ -134,6 +159,7 @@ class PriceAlertService:
             invalid=0,
             failed=0,
         )
+        should_dispatch = self._should_dispatch_notifications(dispatch_notifications)
 
         for alert in enabled:
             try:
@@ -162,6 +188,10 @@ class PriceAlertService:
                         observed_price=int(result.current_price),
                         triggered_at=run_at,
                     )
+                    if should_dispatch:
+                        notifications.append(
+                            self._dispatch_notification(alert, result, snapshot, run_at=run_at)
+                        )
                 self._log_result(alert, result, snapshot=snapshot)
                 results.append(result)
                 summary = _increment_summary(summary, result.outcome)
@@ -184,7 +214,60 @@ class PriceAlertService:
                     outcome=AlertEvaluationOutcome.INVALID.value,
                     message=str(exc),
                 )
-        return results, summary
+        return results, summary, notifications
+
+    def _should_dispatch_notifications(self, override: bool | None) -> bool:
+        if override is not None:
+            return override
+        if self._notifications_enabled_override is not None:
+            return self._notifications_enabled_override
+        if self._dispatcher is None:
+            return False
+        return notifications_enabled()
+
+    def _dispatch_notification(
+        self,
+        alert: PriceAlert,
+        result: AlertEvaluationResult,
+        snapshot: PriceSnapshot,
+        *,
+        run_at: datetime,
+    ) -> NotificationSendResult:
+        channel = self._default_channel or resolve_default_channel()
+        event = build_notification_event(
+            alert,
+            result,
+            snapshot,
+            channel=channel,
+            now=run_at,
+        )
+        if event is None or self._dispatcher is None:
+            return NotificationSendResult(
+                status=NotificationSendStatus.SKIPPED,
+                channel=channel,
+                notification_id="",
+                message="notification event not created",
+            )
+        try:
+            return self._dispatcher.dispatch(event)
+        except Exception as exc:
+            send_result = NotificationSendResult(
+                status=NotificationSendStatus.FAILED,
+                channel=channel,
+                notification_id=event.notification_id,
+                message=str(exc),
+            )
+            log_notification_event(
+                logger,
+                "notification.failed",
+                notification_id=event.notification_id,
+                alert_id=alert.alert_id,
+                target_id=alert.target_id,
+                channel=channel.value,
+                status=send_result.status.value,
+                message=send_result.message,
+            )
+            return send_result
 
     def _log_result(
         self,

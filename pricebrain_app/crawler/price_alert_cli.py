@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pricebrain_app.crawler.notification_dispatcher import build_default_dispatcher
 from pricebrain_app.crawler.price_alert_repository import PriceAlertRepository
 from pricebrain_app.crawler.price_alert_service import PriceAlertService
 from pricebrain_app.crawler.price_ops_cli import build_price_operations_view
@@ -18,6 +19,7 @@ def build_price_alert_service() -> PriceAlertService:
     return PriceAlertService(
         PriceAlertRepository(db),
         build_price_operations_view(),
+        notification_dispatcher=build_default_dispatcher(),
     )
 
 
