@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Catalog: public read, client write deny (MVP) ---
+    match /gpu_vendors/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /gpu_families/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /gpu_models/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /board_partners/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /products/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /malls/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /sellers/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /listings/{listingId} {
+      allow read: if true;
+      allow write: if false;
+
+      match /price_history/{historyId} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+
+    // --- Operational logs: client deny ---
+    match /crawl_jobs/{docId} {
+      allow read, write: if false;
+    }
+    match /crawl_logs/{docId} {
+      allow read, write: if false;
+    }
+    match /validation_logs/{docId} {
+      allow read, write: if false;
+    }
+
+    // --- User data (Phase 2+) ---
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /favorites/{productId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
