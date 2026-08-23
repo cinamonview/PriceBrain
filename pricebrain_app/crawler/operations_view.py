@@ -10,6 +10,7 @@ from pricebrain_app.crawler.gpu_catalog import gpu_model_label_from_target
 from pricebrain_app.crawler.logging_utils import safe_url_for_log
 from pricebrain_app.crawler.malls.ssg import extract_ssg_item_id
 from pricebrain_app.crawler.metrics import get_crawler_metrics
+from pricebrain_app.crawler.operations_read_cache import get_operations_read_cache
 from pricebrain_app.crawler.ops_models import (
     CrawlerFailureView,
     CrawlerOpsSummary,
@@ -95,6 +96,30 @@ class CrawlerOperationsView:
         self._targets = target_repository
         self._db = db
 
+    def _fetch_targets(
+        self,
+        *,
+        mall_id: str | None = None,
+        enabled: bool | None = None,
+        category: str | None = None,
+        tag: str | None = None,
+        priority_min: int | None = None,
+    ) -> list[CrawlTarget]:
+        cache = get_operations_read_cache()
+        key = (mall_id, enabled, category, tag, priority_min)
+        if cache is not None and key in cache.crawler_targets:
+            return cache.crawler_targets[key]
+        result = self._targets.list_all(
+            mall_id=mall_id,
+            enabled=enabled,
+            category=category,
+            tag=tag,
+            priority_min=priority_min,
+        )
+        if cache is not None:
+            cache.crawler_targets[key] = result
+        return result
+
     def list_targets(
         self,
         *,
@@ -103,7 +128,7 @@ class CrawlerOperationsView:
     ) -> list[TargetOperationalView]:
         run_at = now or utc_now()
         flt = filters or TargetListFilter()
-        raw = self._targets.list_all(
+        raw = self._fetch_targets(
             mall_id=flt.mall_id,
             enabled=flt.enabled,
             category=flt.category,
@@ -125,7 +150,7 @@ class CrawlerOperationsView:
 
     def summarize(self, *, now: datetime | None = None) -> CrawlerOpsSummary:
         run_at = now or utc_now()
-        targets = self._targets.list_all()
+        targets = self._fetch_targets()
         enabled = [target for target in targets if target.enabled]
         disabled = [target for target in targets if not target.enabled]
         due = [target for target in enabled if is_target_due(target, run_at)]
@@ -151,7 +176,7 @@ class CrawlerOperationsView:
     def summarize_by_mall(self, *, now: datetime | None = None) -> list[MallOpsSummary]:
         run_at = now or utc_now()
         malls: dict[str, list[CrawlTarget]] = {}
-        for target in self._targets.list_all():
+        for target in self._fetch_targets():
             malls.setdefault(target.mall_id, []).append(target)
 
         summaries: list[MallOpsSummary] = []
@@ -175,7 +200,7 @@ class CrawlerOperationsView:
         return summaries
 
     def summarize_gpu_catalog(self) -> GpuCatalogSummary:
-        targets = self._targets.list_all(category="gpu")
+        targets = self._fetch_targets(category="gpu")
         enabled = [target for target in targets if target.enabled]
         disabled = [target for target in targets if not target.enabled]
         model_counts: dict[str, int] = {}
@@ -198,7 +223,7 @@ class CrawlerOperationsView:
         limit: int = 20,
         mall_id: str | None = None,
     ) -> list[CrawlerFailureView]:
-        targets = self._targets.list_all(mall_id=mall_id)
+        targets = self._fetch_targets(mall_id=mall_id)
         failed = [target for target in targets if is_failed_last_status(target.last_status)]
         failed.sort(
             key=lambda item: item.last_crawled_at or item.updated_at or datetime.min.replace(tzinfo=utc_now().tzinfo),
@@ -281,13 +306,12 @@ def get_price_change_for_listing(
     *,
     fallback_price: int | None = None,
 ) -> PriceChangeView:
-    listing_doc = db.collection(c.LISTINGS).document(listing_id).get()
-    listing_data = listing_doc.to_dict() if getattr(listing_doc, "exists", False) else None
+    exists, listing_data = _get_listing_document_data(db, listing_id)
 
     product_name = None
     current_price = fallback_price
     last_crawled_at = None
-    if listing_data:
+    if exists and listing_data:
         product_name = listing_data.get("normalized_product_name") or listing_data.get("raw_product_name")
         if listing_data.get("current_price") is not None:
             current_price = int(listing_data["current_price"])
@@ -317,7 +341,28 @@ def get_price_change_for_listing(
     )
 
 
+def _get_listing_document_data(
+    db: Any,
+    listing_id: str,
+) -> tuple[bool, dict[str, Any] | None]:
+    cache = get_operations_read_cache()
+    if cache is not None and listing_id in cache.listing_data:
+        return cache.listing_data[listing_id]
+
+    listing_doc = db.collection(c.LISTINGS).document(listing_id).get()
+    exists = getattr(listing_doc, "exists", False)
+    data = listing_doc.to_dict() if exists else None
+    result = (exists, data)
+    if cache is not None:
+        cache.listing_data[listing_id] = result
+    return result
+
+
 def _read_price_history(db: Any, listing_id: str) -> list[dict[str, Any]]:
+    cache = get_operations_read_cache()
+    if cache is not None and listing_id in cache.price_history:
+        return cache.price_history[listing_id]
+
     prefix = f"{c.LISTINGS}/{listing_id}/{c.PRICE_HISTORY}/"
     if hasattr(db, "paths"):
         entries: list[dict[str, Any]] = []
@@ -328,14 +373,16 @@ def _read_price_history(db: Any, listing_id: str) -> list[dict[str, Any]]:
             if data:
                 entries.append(dict(data))
         entries.sort(key=lambda item: item.get("crawled_at") or datetime.min.replace(tzinfo=utc_now().tzinfo))
-        return entries
+    else:
+        snapshots = (
+            db.collection(c.LISTINGS)
+            .document(listing_id)
+            .collection(c.PRICE_HISTORY)
+            .stream()
+        )
+        entries = [dict(snapshot.to_dict() or {}) for snapshot in snapshots]
+        entries.sort(key=lambda item: item.get("crawled_at") or datetime.min.replace(tzinfo=utc_now().tzinfo))
 
-    snapshots = (
-        db.collection(c.LISTINGS)
-        .document(listing_id)
-        .collection(c.PRICE_HISTORY)
-        .stream()
-    )
-    entries = [dict(snapshot.to_dict() or {}) for snapshot in snapshots]
-    entries.sort(key=lambda item: item.get("crawled_at") or datetime.min.replace(tzinfo=utc_now().tzinfo))
+    if cache is not None:
+        cache.price_history[listing_id] = entries
     return entries

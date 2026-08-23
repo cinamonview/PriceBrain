@@ -1,5 +1,7 @@
 """FastAPI application entrypoint — docs/09, docs/13."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
@@ -9,11 +11,27 @@ from pricebrain_app.api.operations.contract import FORBIDDEN_OPERATIONS_METHODS,
 from pricebrain_app.api.operations.errors import OPERATIONS_ERROR_RESPONSES, register_operations_exception_handlers
 from pricebrain_app.api.operations.router import router as operations_router
 from pricebrain_app.api.operations.schemas import OperationsErrorResponse
+from pricebrain_app.config.settings import get_settings
+from pricebrain_app.firebase.admin import ensure_firebase_admin_initialized
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    settings = get_settings()
+    if (
+        settings.pricebrain_auth_enabled
+        and not settings.pricebrain_auth_emulator
+        and settings.firebase_configured
+    ):
+        ensure_firebase_admin_initialized()
+    yield
+
 
 app = FastAPI(
     title="PriceBrain API",
     description="Backend API — catalog write via Admin SDK (docs/13)",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.include_router(health_router)

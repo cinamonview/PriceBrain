@@ -1,7 +1,9 @@
 import { FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 export function LoginPage() {
+  const navigate = useNavigate();
   const { login, configured } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,6 +16,7 @@ export function LoginPage() {
     setError(null);
     try {
       await login(email, password);
+      navigate("/", { replace: true });
     } catch {
       setError("로그인에 실패했습니다. Firebase 계정과 role claim을 확인하세요.");
     } finally {

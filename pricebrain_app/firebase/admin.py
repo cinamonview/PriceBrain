@@ -12,10 +12,10 @@ from pricebrain_app.config.settings import get_settings
 from pricebrain_app.firebase.config import get_firebase_options
 
 
-def get_firestore_client() -> FirestoreClient:
-    """Return a Firestore client via Firebase Admin SDK (server-side only)."""
+def ensure_firebase_admin_initialized() -> None:
+    """Initialize Firebase Admin SDK once for server-side Firebase services."""
     if firebase_admin._apps:
-        return firestore.client()
+        return
 
     settings = get_settings()
     options = get_firebase_options(settings)
@@ -25,7 +25,7 @@ def get_firestore_client() -> FirestoreClient:
             "FIRESTORE_EMULATOR_HOST", settings.firestore_emulator_host
         )
         firebase_admin.initialize_app(options=options)
-        return firestore.client()
+        return
 
     if not settings.google_application_credentials:
         raise ValueError(
@@ -35,4 +35,9 @@ def get_firestore_client() -> FirestoreClient:
 
     cred = credentials.Certificate(settings.google_application_credentials)
     firebase_admin.initialize_app(cred, options)
+
+
+def get_firestore_client() -> FirestoreClient:
+    """Return a Firestore client via Firebase Admin SDK (server-side only)."""
+    ensure_firebase_admin_initialized()
     return firestore.client()

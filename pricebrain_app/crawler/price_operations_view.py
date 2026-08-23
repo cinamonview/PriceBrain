@@ -7,9 +7,11 @@ from typing import Any
 
 from pricebrain_app.crawler.operations_view import (
     TargetListFilter,
+    _get_listing_document_data,
     _read_price_history,
     resolve_listing_id_for_target,
 )
+from pricebrain_app.crawler.operations_read_cache import get_operations_read_cache
 from pricebrain_app.crawler.price_calculations import (
     build_price_history_views,
     build_price_snapshot,
@@ -44,10 +46,17 @@ class PriceOperationsView:
         self._db = db
 
     def get_price_summary(self, target_id: str) -> PriceSummary | None:
+        cache = get_operations_read_cache()
+        if cache is not None and target_id in cache.price_summaries:
+            return cache.price_summaries[target_id]
+
         target = self._targets.get(target_id)
         if target is None:
             return None
-        return self._build_summary_for_target(target)
+        summary = self._build_summary_for_target(target)
+        if cache is not None:
+            cache.price_summaries[target_id] = summary
+        return summary
 
     def get_current_price(self, target_id: str) -> PriceSnapshot | None:
         summary = self.get_price_summary(target_id)
@@ -163,9 +172,8 @@ class PriceOperationsView:
         product_id = None
 
         if listing_id is not None:
-            listing_doc = self._db.collection(c.LISTINGS).document(listing_id).get()
-            if getattr(listing_doc, "exists", False):
-                listing_data = listing_doc.to_dict() or {}
+            exists, listing_data = _get_listing_document_data(self._db, listing_id)
+            if exists and listing_data is not None:
                 product_id = listing_data.get("product_id")
             history_entries = _read_price_history(self._db, listing_id)
 

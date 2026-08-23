@@ -20,6 +20,7 @@ from pricebrain_app.crawler.dashboard_operations_models import (
     RunnerDashboardSummary,
 )
 from pricebrain_app.crawler.logging_utils import get_crawler_logger
+from pricebrain_app.crawler.operations_read_cache import operations_read_scope
 from pricebrain_app.crawler.operations_view import CrawlerOperationsView, TargetListFilter
 from pricebrain_app.crawler.price_operations_view import PriceListFilter, PriceOperationsView, price_filter_from_target_filter
 from pricebrain_app.crawler.targets import utc_now
@@ -45,6 +46,15 @@ class DashboardOperationsView:
         self._audit = audit_view
 
     def build_dashboard_snapshot(
+        self,
+        *,
+        filters: DashboardFilter | None = None,
+        now: datetime | None = None,
+    ) -> PriceBrainDashboardSnapshot:
+        with operations_read_scope():
+            return self._build_dashboard_snapshot(filters=filters, now=now)
+
+    def _build_dashboard_snapshot(
         self,
         *,
         filters: DashboardFilter | None = None,

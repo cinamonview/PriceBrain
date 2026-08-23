@@ -7,22 +7,38 @@ import sys
 
 from pricebrain_app.crawler.ops_cli import collect_secrets_for_redaction, print_json
 from pricebrain_app.crawler.price_alert_cli import build_price_alert_repository
+from pricebrain_app.crawler.price_alert_models import parse_cli_alert_type
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="List price alerts.")
     parser.add_argument("--target-id", help="Filter by crawl target ID")
     parser.add_argument("--enabled-only", action="store_true", help="Show enabled alerts only")
+    parser.add_argument("--enabled", action="store_true", help="Show enabled alerts only")
+    parser.add_argument("--disabled", action="store_true", help="Show disabled alerts only")
+    parser.add_argument("--type", help="Filter by alert type")
+    parser.add_argument("--mall", help="Filter by mall_id")
     parser.add_argument("--json", action="store_true", help="Output JSON")
     args = parser.parse_args(argv)
 
+    enabled = None
+    if args.enabled_only or args.enabled:
+        enabled = True
+    elif args.disabled:
+        enabled = False
+
     try:
         repo = build_price_alert_repository()
-        enabled = True if args.enabled_only else None
         alerts = repo.list_all(
             target_id=args.target_id.strip() if args.target_id else None,
             enabled=enabled,
         )
+        if args.type:
+            alert_type = parse_cli_alert_type(args.type.replace("_", "-"))
+            alerts = [item for item in alerts if item.alert_type is alert_type]
+        if args.mall:
+            mall = args.mall.strip().lower()
+            alerts = [item for item in alerts if item.mall_id == mall]
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

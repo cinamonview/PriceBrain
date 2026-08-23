@@ -15,6 +15,7 @@ from pricebrain_app.crawler.alert_operations_models import (
 )
 from pricebrain_app.crawler.alert_ops_health_store import AlertOpsHealthStore, get_alert_ops_health_store
 from pricebrain_app.crawler.logging_utils import get_crawler_logger
+from pricebrain_app.crawler.operations_read_cache import get_operations_read_cache
 from pricebrain_app.crawler.notification_models import NotificationSendStatus
 from pricebrain_app.crawler.price_alert_models import (
     PRICE_ALERTS_COLLECTION,
@@ -202,6 +203,10 @@ class AlertOperationsView:
         return alerts
 
     def _list_alerts_safe(self) -> tuple[list[PriceAlert], int]:
+        cache = get_operations_read_cache()
+        if cache is not None and cache.price_alerts is not None:
+            return cache.price_alerts
+
         alerts: list[PriceAlert] = []
         malformed = 0
         for snapshot in self._alerts._db.collection(PRICE_ALERTS_COLLECTION).stream():
@@ -210,7 +215,10 @@ class AlertOperationsView:
                 alerts.append(PriceAlert.from_firestore_dict(data, doc_id=snapshot.id))
             except Exception:
                 malformed += 1
-        return alerts, malformed
+        result = (alerts, malformed)
+        if cache is not None:
+            cache.price_alerts = result
+        return result
 
     def _build_snapshots(
         self,

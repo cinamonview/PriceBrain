@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from pricebrain_app.crawler.dashboard_operations_models import DashboardFilter
+from pricebrain_app.crawler.investigation_operations_models import DashboardInvestigationSnapshot
 from pricebrain_app.crawler.investigation_operations_view import InvestigationOperationsView
 from pricebrain_app.crawler.logging_utils import get_crawler_logger
 from pricebrain_app.crawler.remediation_operations_models import (
@@ -48,12 +49,14 @@ class RemediationOperationsView:
         *,
         dashboard_filters: DashboardFilter | None = None,
         now: datetime | None = None,
+        investigation: DashboardInvestigationSnapshot | None = None,
     ) -> RemediationPlan:
         run_at = now or utc_now()
-        investigation = self._investigation.investigate_dashboard(
-            dashboard_filters=dashboard_filters,
-            now=run_at,
-        )
+        if investigation is None:
+            investigation = self._investigation.investigate_dashboard(
+                dashboard_filters=dashboard_filters,
+                now=run_at,
+            )
         actions, read_errors = build_remediation_actions(investigation)
         sorted_actions = sort_actions(actions)
         actionable_findings = sum(

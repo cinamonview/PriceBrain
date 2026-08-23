@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pricebrain_app.crawler.dashboard_operations_models import DashboardFilter
+from pricebrain_app.crawler.dashboard_operations_models import DashboardFilter, PriceBrainDashboardSnapshot
 from pricebrain_app.crawler.dashboard_operations_view import DashboardOperationsView
 from pricebrain_app.crawler.investigation_operations_models import (
     DashboardInvestigationSnapshot,
@@ -38,9 +38,11 @@ class InvestigationOperationsView:
         *,
         dashboard_filters: DashboardFilter | None = None,
         now: datetime | None = None,
+        dashboard: PriceBrainDashboardSnapshot | None = None,
     ) -> DashboardInvestigationSnapshot:
         run_at = now or utc_now()
-        dashboard = self._dashboard.build_dashboard_snapshot(filters=dashboard_filters, now=run_at)
+        if dashboard is None:
+            dashboard = self._dashboard.build_dashboard_snapshot(filters=dashboard_filters, now=run_at)
         findings = sort_findings(analyze_dashboard_snapshot(dashboard, generated_at=run_at))
         summary = summarize_findings(findings)
         snapshot = DashboardInvestigationSnapshot(
