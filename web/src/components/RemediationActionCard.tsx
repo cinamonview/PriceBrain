@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { RemediationAction } from "../api/types";
-import { formatAreaLabel } from "../utils/investigationFilters";
+import { UI, formatAreaLabel, formatYesNo } from "../utils/uiLabels";
 import { PriorityBadge } from "./PriorityBadge";
 import { ResourceRef } from "./ResourceRef";
 
@@ -29,47 +29,47 @@ export function RemediationActionCard({
         <span className="finding-code">{action.action_type}</span>
       </div>
       <h4>{action.title}</h4>
-      <p className="finding-cause-label">Rationale:</p>
+      <p className="finding-cause-label">근거:</p>
       <p className="finding-message">{action.reason}</p>
       <div className="finding-meta-grid">
         <div>
-          <span className="meta-label">Action ID</span>
+          <span className="meta-label">조치 ID</span>
           <span>{action.action_id}</span>
         </div>
         <div>
-          <span className="meta-label">Area</span>
+          <span className="meta-label">{UI.area}</span>
           <span>{formatAreaLabel(action.area)}</span>
         </div>
         {action.target_id ? (
           <div>
-            <span className="meta-label">Target</span>
+            <span className="meta-label">{UI.target}</span>
             <ResourceRef kind="Target" value={action.target_id} />
           </div>
         ) : null}
         {action.alert_id ? (
           <div>
-            <span className="meta-label">Alert</span>
+            <span className="meta-label">{UI.alert}</span>
             <ResourceRef kind="Alert" value={action.alert_id} />
           </div>
         ) : null}
         <div>
-          <span className="meta-label">Source finding</span>
+          <span className="meta-label">원본 발견 사항</span>
           <span>{action.finding_id}</span>
         </div>
         <div>
-          <span className="meta-label">Approval</span>
-          <span>{action.human_approval_required ? "Required" : "Not required"}</span>
+          <span className="meta-label">{UI.approvalRequired}</span>
+          <span>{action.human_approval_required ? UI.required : UI.notRequired}</span>
         </div>
         <div>
-          <span className="meta-label">Auto executable</span>
-          <span>{action.auto_executable ? "Yes" : "No"}</span>
+          <span className="meta-label">자동 실행 가능</span>
+          <span>{formatYesNo(action.auto_executable)}</span>
         </div>
       </div>
       <div className="action-card-links">
         <Link to="/investigation" onClick={(event) => event.stopPropagation()}>
-          View Finding
+          {UI.viewFinding}
         </Link>
-        <span className="muted">Review Action</span>
+        <span className="muted">{UI.reviewAction}</span>
       </div>
     </button>
   );

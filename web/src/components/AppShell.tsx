@@ -2,14 +2,15 @@ import { NavLink, Outlet } from "react-router-dom";
 import { formatPrimaryRole, useAuth } from "../auth/AuthContext";
 import { connectionLabel, useConnectionStatus } from "../auth/ConnectionContext";
 import { getApiBaseUrl } from "../api/operationsApi";
+import { UI } from "../utils/uiLabels";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Command Center", end: true },
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/investigation", label: "Investigation" },
-  { to: "/remediation", label: "Remediation" },
-  { to: "/execution", label: "Execution History" },
-  { to: "/audit", label: "Audit" },
+  { to: "/", label: UI.commandCenter, end: true },
+  { to: "/dashboard", label: UI.dashboard },
+  { to: "/investigation", label: UI.investigation },
+  { to: "/remediation", label: UI.remediation },
+  { to: "/execution", label: UI.executionHistory },
+  { to: "/audit", label: UI.audit },
 ];
 
 export function AppShell() {
@@ -20,7 +21,7 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand">PriceBrain</div>
+        <div className="brand">{UI.appName}</div>
         <nav>
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className="nav-link">
@@ -32,17 +33,19 @@ export function AppShell() {
       <div className="main-column">
         <header className="topbar">
           <div>
-            <div className="topbar-title">Operations Dashboard</div>
-            <div className="topbar-subtitle">Backend: {apiBase}</div>
+            <div className="topbar-title">{UI.operationsDashboard}</div>
+            <div className="topbar-subtitle">
+              {UI.backend}: {apiBase}
+            </div>
           </div>
           <div className="topbar-user">
             <div className={`connection-pill connection-${connectionStatus}`}>
               {connectionLabel(connectionStatus)}
             </div>
-            <div>{user?.email ?? user?.uid ?? "Unknown user"}</div>
+            <div>{user?.email ?? user?.uid ?? UI.unknownUser}</div>
             <div className="role-pill">{formatPrimaryRole(user?.roles ?? [])}</div>
             <button type="button" onClick={() => void logout()}>
-              Logout
+              {UI.logout}
             </button>
           </div>
         </header>

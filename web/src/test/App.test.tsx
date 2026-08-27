@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import App from "../App";
 import { AuthProvider } from "../auth/AuthContext";
+import { ConnectionProvider } from "../auth/ConnectionContext";
 
 const mockUser = {
   uid: "viewer-1",
@@ -32,6 +33,18 @@ vi.mock("firebase/auth", () => ({
   signOut: vi.fn(async () => undefined),
 }));
 
+function renderApp() {
+  return render(
+    <MemoryRouter initialEntries={["/login"]}>
+      <AuthProvider>
+        <ConnectionProvider>
+          <App />
+        </ConnectionProvider>
+      </AuthProvider>
+    </MemoryRouter>,
+  );
+}
+
 describe("App shell", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
@@ -43,29 +56,17 @@ describe("App shell", () => {
   });
 
   it("renders login screen", () => {
-    render(
-      <MemoryRouter initialEntries={["/login"]}>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </MemoryRouter>,
-    );
-    expect(screen.getByText("PriceBrain Operations")).toBeInTheDocument();
+    renderApp();
+    expect(screen.getByText("PriceBrain 운영")).toBeInTheDocument();
   });
 
   it("does not render token in UI after login attempt", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter initialEntries={["/login"]}>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </MemoryRouter>,
-    );
+    renderApp();
 
-    await user.type(screen.getByLabelText("Email"), "viewer@example.com");
-    await user.type(screen.getByLabelText("Password"), "password");
-    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    await user.type(screen.getByLabelText("이메일"), "viewer@example.com");
+    await user.type(screen.getByLabelText("비밀번호"), "password");
+    await user.click(screen.getByRole("button", { name: "로그인" }));
 
     await waitFor(() => {
       expect(screen.queryByText("mock-id-token")).not.toBeInTheDocument();

@@ -15,6 +15,8 @@ def clean(data: dict[str, Any]) -> dict[str, Any]:
         "product_id",
         "product_name",
         "brand",
+        "brand_eng_nm",
+        "manufacturer_part_number",
         "model_name",
         "seller",
         "product_url",

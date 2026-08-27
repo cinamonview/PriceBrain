@@ -23,7 +23,12 @@ from pricebrain_app.crawler.ops_models import (
 )
 from pricebrain_app.crawler.results import CrawlerStatus
 from pricebrain_app.crawler.target_repository import CrawlTargetRepository
-from pricebrain_app.crawler.targets import CRAWL_STATUS_CLAIMED, CrawlTarget, utc_now
+from pricebrain_app.crawler.targets import (
+    CRAWL_STATUS_CLAIMED,
+    CrawlTarget,
+    derive_external_product_id,
+    utc_now,
+)
 from pricebrain_app.crawler.worker_health import get_worker_health
 from pricebrain_app.repository import constants as c
 from pricebrain_app.repository.listing_repository import build_listing_document_id
@@ -292,12 +297,23 @@ class CrawlerOperationsView:
 
 
 def resolve_listing_id_for_target(target: CrawlTarget) -> str | None:
+    """Map a crawl target to its ingested listing document ID.
+
+    Uses the same external-product-ID derivation as target registration so every
+    supported mall stays in sync, and falls back to the stored
+    `external_product_id` when the URL cannot be parsed.
+    """
     mall = target.mall_id.strip().lower()
-    if mall == "ssg":
-        item_id = extract_ssg_item_id(target.product_url)
-        if item_id:
-            return build_listing_document_id(mall, item_id)
-    return None
+    external_id: str | None = None
+    try:
+        external_id = derive_external_product_id(mall, target.product_url)
+    except ValueError:
+        external_id = None
+    if not external_id:
+        external_id = (target.external_product_id or "").strip() or None
+    if not external_id:
+        return None
+    return build_listing_document_id(mall, external_id)
 
 
 def get_price_change_for_listing(

@@ -149,19 +149,19 @@ describe("ExecutionPage", () => {
 
   it("renders execution history with health and status summaries", async () => {
     renderPage();
-    expect(await screen.findByText("PriceBrain Execution History")).toBeInTheDocument();
-    expect(screen.getByText("Execution Health")).toBeInTheDocument();
-    expect(screen.getAllByText("DEGRADED").length).toBeGreaterThan(0);
+    expect(await screen.findByText("PriceBrain 실행 이력")).toBeInTheDocument();
+    expect(screen.getByText("실행 상태")).toBeInTheDocument();
+    expect(screen.getAllByText("일부 문제").length).toBeGreaterThan(0);
     expect(document.querySelector(".summary-count-card.execution-status-planned")).toHaveTextContent("1");
     expect(document.querySelector(".summary-count-card.execution-status-dry_run")).toHaveTextContent("1");
     expect(document.querySelector(".summary-count-card.execution-status-executed")).toHaveTextContent("1");
     expect(document.querySelector(".summary-count-card.execution-status-blocked")).toHaveTextContent("1");
     expect(document.querySelector(".summary-count-card.execution-status-failed")).toHaveTextContent("1");
-    expect(screen.getAllByText("PLANNED").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("DRY_RUN").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("EXECUTED").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("BLOCKED").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("FAILED").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("계획됨").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("시험 실행").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("실행 완료").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("차단됨").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("실패").length).toBeGreaterThan(0);
   });
 
   it.each([
@@ -171,7 +171,13 @@ describe("ExecutionPage", () => {
   ] as const)("renders execution health %s", async (health, label) => {
     getExecution = vi.fn(async () => ({ ...mockResponse, health }));
     renderPage();
-    expect(await screen.findAllByText(label)).not.toHaveLength(0);
+    const expectedLabel =
+      label === "HEALTHY"
+        ? "정상"
+        : label === "CRITICAL"
+          ? "치명적"
+          : "확인 불가";
+    expect(await screen.findAllByText(expectedLabel)).not.toHaveLength(0);
   });
 
   it("filters by status, mode, area, target, alert, failures-only, search, and sort", async () => {
@@ -179,37 +185,37 @@ describe("ExecutionPage", () => {
     renderPage();
     await screen.findByText("exec-failed");
 
-    await user.selectOptions(screen.getByLabelText("Status filter"), "FAILED");
+    await user.selectOptions(screen.getByLabelText("상태 필터"), "FAILED");
     expect(screen.getByText("exec-failed")).toBeInTheDocument();
     expect(screen.queryByText("exec-planned")).not.toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Status filter"), "ALL");
-    await user.selectOptions(screen.getByLabelText("Mode filter"), "PLAN");
+    await user.selectOptions(screen.getByLabelText("상태 필터"), "ALL");
+    await user.selectOptions(screen.getByLabelText("실행 모드 필터"), "PLAN");
     expect(screen.getByText("exec-planned")).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Mode filter"), "ALL");
-    await user.selectOptions(screen.getByLabelText("Area filter"), "crawler");
+    await user.selectOptions(screen.getByLabelText("실행 모드 필터"), "ALL");
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "crawler");
     expect(screen.getByText("exec-blocked")).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Area filter"), "ALL");
-    await user.type(screen.getByLabelText("Target filter"), "ssg_123");
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "ALL");
+    await user.type(screen.getByLabelText("대상 필터"), "ssg_123");
     expect(screen.getByText("exec-blocked")).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Target filter"));
-    await user.type(screen.getByLabelText("Alert filter"), "alert-1");
+    await user.clear(screen.getByLabelText("대상 필터"));
+    await user.type(screen.getByLabelText("알림 필터"), "alert-1");
     expect(screen.getByText("exec-blocked")).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Alert filter"));
-    await user.click(screen.getByLabelText("failures only"));
+    await user.clear(screen.getByLabelText("알림 필터"));
+    await user.click(screen.getByLabelText("실패 항목만"));
     expect(screen.getByText("exec-failed")).toBeInTheDocument();
     expect(screen.queryByText("exec-blocked")).not.toBeInTheDocument();
 
-    await user.click(screen.getByLabelText("failures only"));
-    await user.type(screen.getByLabelText("Execution search"), "dry-run");
+    await user.click(screen.getByLabelText("실패 항목만"));
+    await user.type(screen.getByLabelText("실행 이력 검색"), "dry-run");
     expect(screen.getByText("exec-dry-run")).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Execution search"));
-    await user.selectOptions(screen.getByLabelText("Sort order"), "OLDEST");
+    await user.clear(screen.getByLabelText("실행 이력 검색"));
+    await user.selectOptions(screen.getByLabelText("정렬 순서"), "OLDEST");
     expect(screen.getByText("exec-planned")).toBeInTheDocument();
   });
 
@@ -220,7 +226,7 @@ describe("ExecutionPage", () => {
     const card = screen.getByText("exec-failed").closest("button");
     expect(card).toBeTruthy();
     await user.click(card!);
-    const panel = screen.getByLabelText("Execution history detail");
+    const panel = screen.getByLabelText("실행 이력 상세");
     expect(within(panel).getByText("exec-failed")).toBeInTheDocument();
     expect(within(panel).getByText("EXECUTION_FAILED")).toBeInTheDocument();
     expect(screen.queryByText("secret-token")).not.toBeInTheDocument();
@@ -234,7 +240,7 @@ describe("ExecutionPage", () => {
       summary: { ...mockResponse.summary, total: 0, planned: 0, dry_run: 0, executed: 0, blocked: 0, failed: 0 },
     }));
     renderPage();
-    expect(await screen.findByText("현재 기록된 execution history가 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("현재 기록된 실행 이력이 없습니다.")).toBeInTheDocument();
   });
 });
 
@@ -257,7 +263,7 @@ describe("ExecutionPage error states", () => {
       throw new ApiError(403, "이 작업을 볼 권한이 없습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Execution 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("실행 이력 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
   });
 
   it("shows 500 message and retry", async () => {
@@ -265,8 +271,8 @@ describe("ExecutionPage error states", () => {
       throw new ApiError(500, "운영 정보를 불러오지 못했습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Execution 정보를 불러오지 못했습니다.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(await screen.findByText("실행 이력 정보를 불러오지 못했습니다.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });
 });
 
@@ -285,12 +291,12 @@ describe("ExecutionPage loading and authorization", () => {
     );
     renderPage();
     expect(document.querySelector(".investigation-loading")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("PriceBrain Execution History")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("PriceBrain 실행 이력")).toBeInTheDocument());
   });
 
   it("calls getExecution through operations API", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Execution History");
+    await screen.findByText("PriceBrain 실행 이력");
     expect(getExecution).toHaveBeenCalled();
   });
 });
@@ -298,7 +304,7 @@ describe("ExecutionPage loading and authorization", () => {
 describe("ExecutionPage read-only security", () => {
   it("does not expose execute controls", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Execution History");
+    await screen.findByText("PriceBrain 실행 이력");
     expect(screen.queryByRole("button", { name: /^execute$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /approve & execute/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^run$/i })).not.toBeInTheDocument();

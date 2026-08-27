@@ -59,6 +59,7 @@ def build_price_summary(
     listing_data: dict[str, Any] | None,
     history_entries: list[dict[str, Any]],
     product_id: str | None = None,
+    listing_exists: bool | None = None,
 ) -> PriceSummary:
     prices = _history_prices(history_entries)
     current_price, previous_price, price_change, observed_at = _resolve_current_and_previous(
@@ -100,6 +101,9 @@ def build_price_summary(
         history_count=len(history_entries),
         classification=classification,
         has_price_observation=has_observation,
+        listing_exists=(
+            listing_data is not None if listing_exists is None else listing_exists
+        ),
     )
 
 

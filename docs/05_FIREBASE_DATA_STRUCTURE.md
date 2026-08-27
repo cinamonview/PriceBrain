@@ -28,6 +28,7 @@
 | `crawl_jobs` | `job_id` | — | O | Admin only |
 | `crawl_logs` | `log_id` | — | O | Admin only |
 | `validation_logs` | `log_id` | — | O | Admin only |
+| `pending_gpu_models` | slug (`rtx_4070`) | **Pending GPU Model (미승인)** | O | Admin only, `gpu_models`와 분리 |
 | `users/{uid}` | Firebase Auth `uid` | User | Phase 2+ | owner read/write |
 | `users/{uid}/favorites` | `product_id` | Favorite | Phase 2+ | owner read/write |
 
@@ -53,6 +54,7 @@
 | `crawl_jobs` | UUID 또는 `{mall}_{timestamp}` | `SSG_20260820_001` |
 | `crawl_logs` | auto ID 또는 UUID | — |
 | `validation_logs` | auto ID 또는 UUID | — |
+| `pending_gpu_models` | 소문자 slug (`gpu_models`와 동일 규칙) | `rtx_4070` |
 
 ### 2.1 canonical_product_id 생성 우선순위
 
@@ -209,6 +211,33 @@ append 조건: `current_price` 변경 시에만 Admin SDK로 추가 — **13**, 
 | `details` | map | | |
 | `created_at` | timestamp | O | |
 
+### 3.12.1 `pending_gpu_models`
+
+Parser가 생성했지만 `gpu_models` Master에 없는 GPU model의 **격리(quarantine) 영역**.
+정상 상품으로 저장하지도, 422로 폐기하지도 않기 위한 검토 대기 entity.
+
+**경계:** `gpu_models` = 승인된 canonical reference / `pending_gpu_models` = 미승인 발견 모델.
+**자동 승격 없음** — 이 Collection의 문서가 `gpu_models`로 자동 등록되는 경로는 존재하지 않는다.
+
+| Field | Type | Required | 설명 |
+|-------|------|----------|------|
+| `gpu_model_id` | string | O | Document ID. `gpu_models` slug 규칙과 동일 (`rtx_4070`) |
+| `display_name` | string | | Parser가 추출한 표시명 (`RTX 4070`) |
+| `gpu_series` | string | | `RTX` \| `GTX` \| `RX` \| `Arc` |
+| `detected_by` | string | O | 발견 지점 (`pipeline.gpu_parser`) |
+| `first_seen_at` | timestamp | O | 최초 발견. 재발견 시 변경되지 않음 |
+| `last_seen_at` | timestamp | O | 최근 발견 |
+| `seen_count` | number | O | 동일 canonical slug 누적 발견 횟수 |
+| `source_malls` | array\<string\> | O | canonical 소문자 `mall_id` (`["elevenst", "ssg"]`) |
+| `example_product_names` | array\<string\> | O | 검토용 예시. 최대 5건 |
+| `example_product_urls` | array\<string\> | O | 검토용 예시. 최대 5건. tracking param 제거된 정규화 URL |
+| `status` | string | O | `PENDING_REVIEW` \| `APPROVED` \| `REJECTED`. 재발견 시 보존됨 |
+
+`vendor_id` / `family_id`는 **저장하지 않는다.** Parser가 추론할 수 없고, Master reference data를
+추측으로 채우면 안 되기 때문이다 (§3.3). 승인 시 사람이 지정한다.
+
+`seller` / `seller_id` / `price`는 저장하지 않는다. GPU model 승인 판단에 불필요하다.
+
 ### 3.13 `users/{uid}` (Phase 2+)
 
 | Field | Type | Required | 설명 |
@@ -317,6 +346,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
     match /validation_logs/{docId} {
+      allow read, write: if false;
+    }
+    // Unapproved GPU models awaiting review — never client-visible, Admin SDK only.
+    match /pending_gpu_models/{docId} {
       allow read, write: if false;
     }
 

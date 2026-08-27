@@ -40,10 +40,17 @@ def normalize_price(value: Any) -> int | None:
 
 
 def normalize_mall_code(mall: str | None) -> str | None:
+    """Uppercase mall code — used for listing document IDs and `malls/{code}`."""
     if not mall:
         return None
     key = mall.strip()
     return MALL_CODE_MAP.get(key, MALL_CODE_MAP.get(key.upper(), key.upper()))
+
+
+def normalize_mall_id(mall: str | None) -> str | None:
+    """Canonical lowercase mall_id — used for crawl targets, API params and filters."""
+    code = normalize_mall_code(mall)
+    return code.lower() if code else None
 
 
 def normalize_product_url(url: str | None) -> str | None:

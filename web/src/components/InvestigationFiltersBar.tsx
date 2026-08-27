@@ -1,5 +1,6 @@
 import type { InvestigationFilterState, SeverityFilter } from "../utils/investigationFilters";
 import { INVESTIGATION_AREAS } from "../utils/investigationFilters";
+import { UI, formatAreaLabel, formatSeverityLabel } from "../utils/uiLabels";
 
 interface InvestigationFiltersBarProps {
   filters: InvestigationFilterState;
@@ -16,66 +17,66 @@ export function InvestigationFiltersBar({ filters, onChange }: InvestigationFilt
   return (
     <section className="section-card investigation-filters">
       <header>
-        <h3>Filters</h3>
+        <h3>{UI.filters}</h3>
       </header>
       <div className="filters-grid">
         <label>
-          Severity
+          {UI.severity}
           <select
             value={filters.severity}
             onChange={(event) => update("severity", event.target.value as SeverityFilter)}
-            aria-label="Severity filter"
+            aria-label="심각도 필터"
           >
             {SEVERITY_OPTIONS.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {formatSeverityLabel(option)}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Area
+          {UI.area}
           <select
             value={filters.area}
             onChange={(event) => update("area", event.target.value)}
-            aria-label="Area filter"
+            aria-label="영역 필터"
           >
-            <option value="ALL">All</option>
+            <option value="ALL">{UI.all}</option>
             {INVESTIGATION_AREAS.map((area) => (
               <option key={area} value={area}>
-                {area.charAt(0).toUpperCase() + area.slice(1)}
+                {formatAreaLabel(area)}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Target
+          {UI.target}
           <input
             type="search"
             value={filters.targetId}
             onChange={(event) => update("targetId", event.target.value)}
-            placeholder="target id"
-            aria-label="Target filter"
+            placeholder="대상 ID"
+            aria-label="대상 필터"
           />
         </label>
         <label>
-          Alert
+          {UI.alert}
           <input
             type="search"
             value={filters.alertId}
             onChange={(event) => update("alertId", event.target.value)}
-            placeholder="alert id"
-            aria-label="Alert filter"
+            placeholder="알림 ID"
+            aria-label="알림 필터"
           />
         </label>
         <label>
-          Search
+          {UI.search}
           <input
             type="search"
             value={filters.search}
             onChange={(event) => update("search", event.target.value)}
-            placeholder="code, title, message..."
-            aria-label="Finding search"
+            placeholder="코드, 제목, 메시지..."
+            aria-label="조사 검색"
           />
         </label>
         <label className="checkbox-field">
@@ -84,7 +85,7 @@ export function InvestigationFiltersBar({ filters, onChange }: InvestigationFilt
             checked={filters.failuresOnly}
             onChange={(event) => update("failuresOnly", event.target.checked)}
           />
-          failures only
+          {UI.failuresOnly}
         </label>
       </div>
     </section>

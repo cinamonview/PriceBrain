@@ -5,6 +5,13 @@ import type {
   ExecutionStatusFilter,
 } from "../utils/executionFilters";
 import { EXECUTION_AREAS } from "../utils/executionFilters";
+import {
+  UI,
+  formatAreaLabel,
+  formatExecutionStatusLabel,
+  formatModeLabel,
+  formatSortLabel,
+} from "../utils/uiLabels";
 
 interface ExecutionFiltersBarProps {
   filters: ExecutionFilterState;
@@ -27,6 +34,14 @@ const MODE_OPTIONS: ExecutionModeFilter[] = ["ALL", "PLAN", "DRY_RUN", "EXECUTE"
 
 const SORT_OPTIONS: ExecutionSortOption[] = ["NEWEST", "OLDEST", "STATUS", "DURATION"];
 
+function formatStatusFilterLabel(option: ExecutionStatusFilter): string {
+  return option === "ALL" ? UI.all : formatExecutionStatusLabel(option);
+}
+
+function formatModeFilterLabel(option: ExecutionModeFilter): string {
+  return option === "ALL" ? UI.all : formatModeLabel(option);
+}
+
 export function ExecutionFiltersBar({ filters, onChange }: ExecutionFiltersBarProps) {
   function update<K extends keyof ExecutionFilterState>(
     key: K,
@@ -38,92 +53,92 @@ export function ExecutionFiltersBar({ filters, onChange }: ExecutionFiltersBarPr
   return (
     <section className="section-card investigation-filters">
       <header>
-        <h3>Filters</h3>
+        <h3>{UI.filters}</h3>
       </header>
       <div className="filters-grid">
         <label>
-          Status
+          {UI.status}
           <select
             value={filters.status}
             onChange={(event) => update("status", event.target.value as ExecutionStatusFilter)}
-            aria-label="Status filter"
+            aria-label="상태 필터"
           >
             {STATUS_OPTIONS.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {formatStatusFilterLabel(option)}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Mode
+          실행 모드
           <select
             value={filters.mode}
             onChange={(event) => update("mode", event.target.value as ExecutionModeFilter)}
-            aria-label="Mode filter"
+            aria-label="실행 모드 필터"
           >
             {MODE_OPTIONS.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {formatModeFilterLabel(option)}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Area
+          {UI.area}
           <select
             value={filters.area}
             onChange={(event) => update("area", event.target.value)}
-            aria-label="Area filter"
+            aria-label="영역 필터"
           >
-            <option value="ALL">All</option>
+            <option value="ALL">{UI.all}</option>
             {EXECUTION_AREAS.map((area) => (
               <option key={area} value={area}>
-                {area.charAt(0).toUpperCase() + area.slice(1)}
+                {formatAreaLabel(area)}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Target
+          {UI.target}
           <input
             type="search"
             value={filters.targetId}
             onChange={(event) => update("targetId", event.target.value)}
-            placeholder="target id"
-            aria-label="Target filter"
+            placeholder="대상 ID"
+            aria-label="대상 필터"
           />
         </label>
         <label>
-          Alert
+          {UI.alert}
           <input
             type="search"
             value={filters.alertId}
             onChange={(event) => update("alertId", event.target.value)}
-            placeholder="alert id"
-            aria-label="Alert filter"
+            placeholder="알림 ID"
+            aria-label="알림 필터"
           />
         </label>
         <label>
-          Search
+          {UI.search}
           <input
             type="search"
             value={filters.search}
             onChange={(event) => update("search", event.target.value)}
-            placeholder="execution id, action id, message..."
-            aria-label="Execution search"
+            placeholder="실행 ID, 조치 ID, 메시지..."
+            aria-label="실행 이력 검색"
           />
         </label>
         <label>
-          Sort
+          정렬
           <select
             value={filters.sort}
             onChange={(event) => update("sort", event.target.value as ExecutionSortOption)}
-            aria-label="Sort order"
+            aria-label="정렬 순서"
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {formatSortLabel(option)}
               </option>
             ))}
           </select>
@@ -134,7 +149,7 @@ export function ExecutionFiltersBar({ filters, onChange }: ExecutionFiltersBarPr
             checked={filters.failuresOnly}
             onChange={(event) => update("failuresOnly", event.target.checked)}
           />
-          failures only
+          {UI.failuresOnly}
         </label>
         <label className="checkbox-field">
           <input
@@ -142,7 +157,7 @@ export function ExecutionFiltersBar({ filters, onChange }: ExecutionFiltersBarPr
             checked={filters.recentOnly}
             onChange={(event) => update("recentOnly", event.target.checked)}
           />
-          recent
+          {UI.recent}
         </label>
       </div>
     </section>

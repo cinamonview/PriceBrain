@@ -8,7 +8,10 @@ from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 
 from pricebrain_app.repository import constants as c
 from pricebrain_app.repository.base import BaseRepository
-from pricebrain_app.repository.exceptions import RepositoryValidationError
+from pricebrain_app.repository.exceptions import (
+    RepositoryValidationError,
+    UnknownGpuModelError,
+)
 from pricebrain_app.repository.gpu_repository import GpuRepository
 
 
@@ -65,9 +68,9 @@ class ReferenceRepository(BaseRepository):
         gpu_repo = GpuRepository(self.db)
         model = gpu_repo.get_model(gpu_model_id)
         if model is None:
-            raise RepositoryValidationError(
+            raise UnknownGpuModelError(
                 f"gpu_model_id not found in GPU master: {gpu_model_id}",
-                field="gpu_model_id",
+                gpu_model_id=gpu_model_id,
             )
         vendor_id = str(model.get("vendor_id", ""))
         family_id = str(model.get("family_id", ""))

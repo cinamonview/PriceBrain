@@ -17,9 +17,13 @@ interface PriorityBadgeProps {
   priority: string;
 }
 
+import { formatPriorityLabel } from "../utils/uiLabels";
+
 export function PriorityBadge({ priority }: PriorityBadgeProps) {
   const normalized = normalizePriority(priority);
   return (
-    <span className={`priority-badge priority-${normalized.toLowerCase()}`}>{normalized}</span>
+    <span className={`priority-badge priority-${normalized.toLowerCase()}`} title={normalized}>
+      {formatPriorityLabel(normalized)}
+    </span>
   );
 }

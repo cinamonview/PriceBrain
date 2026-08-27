@@ -1,0 +1,132 @@
+{
+  "curPage": 1,
+  "totalPage": 105,
+  "totalCount": 8347,
+  "searchMeta": {
+    "searchKeyword": "RTX 5070"
+  },
+  "data": [
+    {
+      "groupName": "relatedKeyword",
+      "relatedKeywordList": [
+        "rtx 5070 ti",
+        "rtx 5070 그래픽카드"
+      ],
+      "empty": false
+    },
+    {
+      "groupName": "recommend",
+      "title": "추천상품",
+      "items": [
+        {
+          "id": 8875337696,
+          "title": "GIGABYTE 지포스 RTX 5070 GAMING OC D7 12GB",
+          "finalPrc": 1478000,
+          "selPrc": 1478000,
+          "sellerNickName": "제이씨현",
+          "imageUrl": "https://cdn.011st.com/11dims/resize/248/11src/product/8875337696/B.webp",
+          "isSoldOut": false,
+          "listType": "FOCUS",
+          "brandEngNm": "기가바이트"
+        },
+        {
+          "id": 8875344141,
+          "title": "MSI 지포스 RTX 5070 Ti 게이밍 트리오 OC D7 16GB",
+          "finalPrc": 1259000,
+          "selPrc": 1299000,
+          "sellerNickName": "대원씨티에스",
+          "imageUrl": "https://cdn.011st.com/11dims/resize/248/11src/product/8875344141/B.webp",
+          "isSoldOut": false,
+          "listType": "FOCUS"
+        }
+      ]
+    },
+    {
+      "groupName": "commonProduct",
+      "moduleType": "GRID_6X1",
+      "items": [
+        {
+          "id": 8875337696,
+          "title": "GIGABYTE 지포스 RTX 5070 GAMING OC D7 12GB",
+          "finalPrc": 1478000,
+          "sellerNickName": "제이씨현",
+          "isSoldOut": false,
+          "listType": "RECOMMEND"
+        },
+        {
+          "id": 8123456701,
+          "title": "MSI 지포스 RTX 4070 벤투스 2X OC D6X 12GB",
+          "finalPrc": 899000,
+          "sellerNickName": "대원씨티에스",
+          "isSoldOut": false,
+          "listType": "FOCUS"
+        },
+        {
+          "id": 8123456702,
+          "title": "ASUS 라데온 RX 9070 XT TUF OC D6 16GB",
+          "finalPrc": 1099000,
+          "sellerNickName": "인텍앤컴퍼니",
+          "isSoldOut": false,
+          "listType": "FOCUS"
+        },
+        {
+          "id": 8123456703,
+          "title": "기가바이트 지포스 RTX 5070 AERO OC D7 12GB 제이씨현",
+          "finalPrc": 1520000,
+          "sellerNickName": "제이씨현",
+          "isSoldOut": false,
+          "listType": "FOCUS"
+        },
+        {
+          "id": 8123456704,
+          "title": "[INNO3D] 지포스 RTX 5070 OC D7 12GB X3 그래픽카드",
+          "finalPrc": 1399000,
+          "sellerNickName": "이노쓰리디",
+          "isSoldOut": false,
+          "listType": "FOCUS"
+        },
+        {
+          "id": 8123456705,
+          "title": "라이젠7 7800X3D RTX5070_12GB RAM_32GB SSD_1TB 조립PC 게이밍 컴퓨터",
+          "finalPrc": 2190000,
+          "sellerNickName": "영웅컴퓨터",
+          "isSoldOut": false,
+          "listType": "FOCUS"
+        },
+        {
+          "id": 8123456706,
+          "title": "그래픽카드 알루미늄 방열판 과열방지 부품 27X27X8mm",
+          "finalPrc": 8900,
+          "sellerNickName": "부품몰",
+          "isSoldOut": false,
+          "listType": "FOCUS"
+        },
+        {
+          "id": "",
+          "title": "MSI 지포스 RTX 5080 게이밍 트리오 D7 16GB",
+          "finalPrc": 1990000,
+          "listType": "FOCUS"
+        },
+        {
+          "id": 8123456707,
+          "title": "",
+          "finalPrc": 1234000,
+          "listType": "FOCUS"
+        },
+        {
+          "id": 8123456708,
+          "title": "GIGABYTE 지포스 RTX 5080 AERO OC D7 16GB",
+          "finalPrc": 0,
+          "selPrc": 0,
+          "listType": "FOCUS"
+        },
+        "not-a-dict"
+      ]
+    },
+    {
+      "groupName": "keywordRanking",
+      "title": "실시간 쇼핑 검색어",
+      "items": null
+    }
+  ]
+}

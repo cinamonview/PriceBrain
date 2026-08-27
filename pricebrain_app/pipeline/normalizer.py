@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from pricebrain_app.pipeline.board_partners import canonical_board_partner
 from pricebrain_app.pipeline.utils import (
     normalize_image_url,
     normalize_mall_code,
@@ -14,13 +15,31 @@ from pricebrain_app.pipeline.utils import (
     parse_crawled_at,
 )
 
-_BRACKET_PREFIX = re.compile(r"^\[[^\]]+\]\s*")
+_BRACKET_PREFIX = re.compile(r"^\[([^\]]+)\]\s*")
 _TRAILING_PUNCT = re.compile(r"!+$")
+
+
+def _unwrap_leading_brackets(name: str) -> str:
+    """Strip marketing brackets; unwrap a leading board-partner token.
+
+    docs/08 §6 uses `[특가]` as noise. `[INNO3D]` is identity, not noise.
+    """
+    while True:
+        match = _BRACKET_PREFIX.match(name)
+        if not match:
+            return name
+        inner = match.group(1).strip()
+        partner = canonical_board_partner(inner)
+        remainder = name[match.end() :]
+        if partner:
+            name = f"{partner} {remainder}".strip()
+        else:
+            name = remainder
 
 
 def _normalize_product_name(raw_name: str) -> str:
     """Basic product-name cleaning — docs/08 §6 (raw preserved separately)."""
-    name = _BRACKET_PREFIX.sub("", raw_name)
+    name = _unwrap_leading_brackets(raw_name)
     name = _TRAILING_PUNCT.sub("", name)
     name = re.sub(r"\s+", " ", name).strip()
     name = re.sub(r"(?i)^hit\s+", "", name)

@@ -8,6 +8,11 @@ from enum import Enum
 from typing import Any
 
 
+LISTING_NOT_FOUND = "LISTING_NOT_FOUND"
+HISTORY_NOT_FOUND = "HISTORY_NOT_FOUND"
+HISTORY_EXISTS = "HISTORY_EXISTS"
+
+
 class PriceChangeClassification(str, Enum):
     UNCHANGED = "UNCHANGED"
     PRICE_DOWN = "PRICE_DOWN"
@@ -70,6 +75,16 @@ class PriceSummary:
     history_count: int
     classification: PriceChangeClassification
     has_price_observation: bool
+    listing_exists: bool = False
+
+    @property
+    def listing_state(self) -> str:
+        """Distinguish a missing listing from a listing without price history."""
+        if self.listing_id is None or not self.listing_exists:
+            return LISTING_NOT_FOUND
+        if self.history_count == 0:
+            return HISTORY_NOT_FOUND
+        return HISTORY_EXISTS
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -91,6 +106,8 @@ class PriceSummary:
             "history_count": self.history_count,
             "classification": self.classification.value,
             "has_price_observation": self.has_price_observation,
+            "listing_exists": self.listing_exists,
+            "listing_state": self.listing_state,
         }
 
 

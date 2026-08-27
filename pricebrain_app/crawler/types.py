@@ -13,6 +13,8 @@ class RawProductData(TypedDict, total=False):
     product_id: str
     product_name: str
     brand: str
+    brand_eng_nm: str
+    manufacturer_part_number: str
     model_name: str
     price: int | None
     seller: str

@@ -13,16 +13,17 @@ import {
   DEFAULT_INVESTIGATION_FILTERS,
   filterInvestigationFindings,
 } from "../utils/investigationFilters";
+import { UI, formatHealthLabel, formatSeverityLabel } from "../utils/uiLabels";
 
 function investigationErrorMessage(status: string, fallback: string | null): string | null {
   if (status === "unauthorized") {
     return "인증이 필요합니다.";
   }
   if (status === "forbidden") {
-    return "Investigation 정보를 볼 권한이 없습니다.";
+    return "조사 정보를 볼 권한이 없습니다.";
   }
   if (status === "error") {
-    return "Investigation 정보를 불러오지 못했습니다.";
+    return "조사 정보를 불러오지 못했습니다.";
   }
   return fallback;
 }
@@ -38,7 +39,7 @@ export function InvestigationPage() {
       const raw = await operationsApi.getInvestigation();
       const parsed = parseInvestigationResponse(raw);
       if (!parsed) {
-        throw new ApiError(500, "Investigation 정보를 불러오지 못했습니다.");
+        throw new ApiError(500, "조사 정보를 불러오지 못했습니다.");
       }
       return parsed;
     },
@@ -74,45 +75,47 @@ export function InvestigationPage() {
     <div className="page-stack investigation-page">
       <div className="page-header">
         <div>
-          <h2>PriceBrain Investigation</h2>
-          <p className="muted">Generated at {data.generated_at}</p>
+          <h2>PriceBrain {UI.investigation}</h2>
+          <p className="muted">
+            {UI.generatedAt} {data.generated_at}
+          </p>
         </div>
         <button type="button" onClick={() => void refresh()}>
-          Refresh
+          {UI.refresh}
         </button>
       </div>
 
       <div className="summary-grid">
-        <HealthBadge label="Investigation Health" status={data.health} />
+        <HealthBadge label={formatHealthLabel(UI.investigation)} status={data.health} />
         <div className="summary-count-card severity-critical">
-          <span>CRITICAL</span>
+          <span>{formatSeverityLabel("CRITICAL")}</span>
           <strong>{data.summary.critical_count}</strong>
         </div>
         <div className="summary-count-card severity-error">
-          <span>ERROR</span>
+          <span>{formatSeverityLabel("ERROR")}</span>
           <strong>{data.summary.error_count}</strong>
         </div>
         <div className="summary-count-card severity-warning">
-          <span>WARNING</span>
+          <span>{formatSeverityLabel("WARNING")}</span>
           <strong>{data.summary.warning_count}</strong>
         </div>
         <div className="summary-count-card severity-info">
-          <span>INFO</span>
+          <span>{formatSeverityLabel("INFO")}</span>
           <strong>{data.summary.info_count}</strong>
         </div>
       </div>
 
       <div className="section-card">
         <header>
-          <h3>Summary</h3>
+          <h3>{UI.summary}</h3>
         </header>
         <ul className="metric-list">
           <li>
-            <span>Total findings</span>
+            <span>전체 발견 사항</span>
             <span>{data.summary.total_findings}</span>
           </li>
           <li>
-            <span>Read errors</span>
+            <span>읽기 오류</span>
             <span>{data.summary.read_errors}</span>
           </li>
         </ul>
@@ -126,7 +129,7 @@ export function InvestigationPage() {
             <div className="query-state">
               {data.findings.length === 0
                 ? "현재 확인이 필요한 운영 이슈가 없습니다."
-                : "선택한 filter 조건에 맞는 finding이 없습니다."}
+                : "선택한 필터 조건에 맞는 발견 사항이 없습니다."}
             </div>
           ) : (
             filteredFindings.map((finding) => (

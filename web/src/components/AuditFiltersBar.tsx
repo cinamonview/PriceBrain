@@ -5,6 +5,13 @@ import type {
   AuditSortOption,
 } from "../utils/auditFilters";
 import { AUDIT_AREAS } from "../utils/auditFilters";
+import {
+  UI,
+  formatAreaLabel,
+  formatAuditEventTypeLabel,
+  formatSeverityLabel,
+  formatSortLabel,
+} from "../utils/uiLabels";
 
 interface AuditFiltersBarProps {
   filters: AuditFilterState;
@@ -36,6 +43,16 @@ const SEVERITY_OPTIONS: AuditSeverityFilter[] = [
 
 const SORT_OPTIONS: AuditSortOption[] = ["NEWEST", "OLDEST", "TYPE", "SEVERITY"];
 
+function formatEventTypeFilterLabel(option: AuditEventTypeFilter): string {
+  if (option === "ALL") {
+    return UI.all;
+  }
+  if (option === "UNKNOWN") {
+    return formatSeverityLabel("UNKNOWN");
+  }
+  return formatAuditEventTypeLabel(option);
+}
+
 export function AuditFiltersBar({ filters, onChange }: AuditFiltersBarProps) {
   function update<K extends keyof AuditFilterState>(key: K, value: AuditFilterState[K]) {
     onChange({ ...filters, [key]: value });
@@ -44,92 +61,92 @@ export function AuditFiltersBar({ filters, onChange }: AuditFiltersBarProps) {
   return (
     <section className="section-card investigation-filters">
       <header>
-        <h3>Filters</h3>
+        <h3>{UI.filters}</h3>
       </header>
       <div className="filters-grid">
         <label>
-          Event Type
+          이벤트 유형
           <select
             value={filters.eventType}
             onChange={(event) => update("eventType", event.target.value as AuditEventTypeFilter)}
-            aria-label="Event type filter"
+            aria-label="이벤트 유형 필터"
           >
             {EVENT_TYPE_OPTIONS.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {formatEventTypeFilterLabel(option)}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Severity
+          {UI.severity}
           <select
             value={filters.severity}
             onChange={(event) => update("severity", event.target.value as AuditSeverityFilter)}
-            aria-label="Severity filter"
+            aria-label="심각도 필터"
           >
             {SEVERITY_OPTIONS.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {formatSeverityLabel(option)}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Area
+          {UI.area}
           <select
             value={filters.area}
             onChange={(event) => update("area", event.target.value)}
-            aria-label="Area filter"
+            aria-label="영역 필터"
           >
-            <option value="ALL">All</option>
+            <option value="ALL">{UI.all}</option>
             {AUDIT_AREAS.map((area) => (
               <option key={area} value={area}>
-                {area.charAt(0).toUpperCase() + area.slice(1)}
+                {formatAreaLabel(area)}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Target
+          {UI.target}
           <input
             type="search"
             value={filters.targetId}
             onChange={(event) => update("targetId", event.target.value)}
-            placeholder="target id"
-            aria-label="Target filter"
+            placeholder="대상 ID"
+            aria-label="대상 필터"
           />
         </label>
         <label>
-          Alert
+          {UI.alert}
           <input
             type="search"
             value={filters.alertId}
             onChange={(event) => update("alertId", event.target.value)}
-            placeholder="alert id"
-            aria-label="Alert filter"
+            placeholder="알림 ID"
+            aria-label="알림 필터"
           />
         </label>
         <label>
-          Search
+          {UI.search}
           <input
             type="search"
             value={filters.search}
             onChange={(event) => update("search", event.target.value)}
-            placeholder="event id, message, summary..."
-            aria-label="Audit search"
+            placeholder="이벤트 ID, 메시지, 요약..."
+            aria-label="감사 로그 검색"
           />
         </label>
         <label>
-          Sort
+          정렬
           <select
             value={filters.sort}
             onChange={(event) => update("sort", event.target.value as AuditSortOption)}
-            aria-label="Sort order"
+            aria-label="정렬 순서"
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {formatSortLabel(option)}
               </option>
             ))}
           </select>
@@ -140,7 +157,7 @@ export function AuditFiltersBar({ filters, onChange }: AuditFiltersBarProps) {
             checked={filters.failuresOnly}
             onChange={(event) => update("failuresOnly", event.target.checked)}
           />
-          failures only
+          {UI.failuresOnly}
         </label>
         <label className="checkbox-field">
           <input
@@ -148,7 +165,7 @@ export function AuditFiltersBar({ filters, onChange }: AuditFiltersBarProps) {
             checked={filters.recentOnly}
             onChange={(event) => update("recentOnly", event.target.checked)}
           />
-          recent
+          {UI.recent}
         </label>
       </div>
     </section>

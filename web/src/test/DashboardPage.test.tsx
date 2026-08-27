@@ -37,12 +37,12 @@ describe("DashboardPage", () => {
         <DashboardPage />
       </ConnectionProvider>,
     );
-    expect(await screen.findByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Crawler")).toBeInTheDocument();
-    expect(screen.getByText("Price")).toBeInTheDocument();
-    expect(screen.getByText("Alerts")).toBeInTheDocument();
-    expect(screen.getByText("Notifications")).toBeInTheDocument();
-    expect(screen.getByText("Runner")).toBeInTheDocument();
-    expect(screen.getByText("Audit")).toBeInTheDocument();
+    expect(await screen.findByText("대시보드")).toBeInTheDocument();
+    expect(screen.getByText("크롤러")).toBeInTheDocument();
+    expect(screen.getByText("가격")).toBeInTheDocument();
+    expect(screen.getByText("가격 알림")).toBeInTheDocument();
+    expect(screen.getByText("알림 전송")).toBeInTheDocument();
+    expect(screen.getByText("실행기")).toBeInTheDocument();
+    expect(screen.getByText("감사 로그")).toBeInTheDocument();
   });
 });

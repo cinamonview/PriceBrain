@@ -208,6 +208,23 @@ def ingest_result(
             payload=crawl_result.payload,
         )
 
+    if response.get("status") == "quarantined":
+        logger.warning(
+            "ingest quarantined", extra={"gpu_model_id": response.get("gpu_model_id")}
+        )
+        return CrawlerResult(
+            status=CrawlerStatus.QUARANTINED,
+            mall_id=crawl_result.mall_id,
+            product_url=crawl_result.product_url,
+            external_product_id=crawl_result.external_product_id,
+            message=f"unknown GPU model quarantined: {response.get('gpu_model_id')}",
+            retry_count=crawl_result.retry_count,
+            elapsed_ms=crawl_result.elapsed_ms,
+            crawled_at=crawl_result.crawled_at,
+            payload=crawl_result.payload,
+            ingest_response=response,
+        )
+
     logger.info("ingest success", extra={"listing_id": response.get("listing_id")})
     return CrawlerResult(
         status=CrawlerStatus.SUCCESS,

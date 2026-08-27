@@ -170,10 +170,11 @@ class PriceOperationsView:
         listing_data = None
         history_entries: list[dict[str, Any]] = []
         product_id = None
+        listing_exists = False
 
         if listing_id is not None:
-            exists, listing_data = _get_listing_document_data(self._db, listing_id)
-            if exists and listing_data is not None:
+            listing_exists, listing_data = _get_listing_document_data(self._db, listing_id)
+            if listing_exists and listing_data is not None:
                 product_id = listing_data.get("product_id")
             history_entries = _read_price_history(self._db, listing_id)
 
@@ -183,6 +184,7 @@ class PriceOperationsView:
             listing_data=listing_data,
             history_entries=history_entries,
             product_id=str(product_id) if product_id else None,
+            listing_exists=listing_exists,
         )
 
 

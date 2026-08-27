@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import type { ExecutionHistoryEntry } from "../api/types";
-import { formatAreaLabel } from "../utils/investigationFilters";
 import { statusHint } from "../utils/executionFilters";
+import { UI, formatAreaLabel, formatYesNo } from "../utils/uiLabels";
 import { ExecutionStatusBadge } from "./ExecutionStatusBadge";
 import { ResourceRef } from "./ResourceRef";
 
@@ -43,58 +43,58 @@ export function ExecutionHistoryCard({
         <span className="finding-code">{entry.mode}</span>
       </div>
       <h4>{entry.title || entry.action_type}</h4>
-      <p className="finding-cause-label">Result:</p>
+      <p className="finding-cause-label">결과:</p>
       <p className="finding-message">{entry.message || entry.error_code || "-"}</p>
       <div className="finding-meta-grid">
         <div>
-          <span className="meta-label">Execution ID</span>
+          <span className="meta-label">실행 ID</span>
           <span>{entry.execution_id}</span>
         </div>
         <div>
-          <span className="meta-label">Action ID</span>
+          <span className="meta-label">조치 ID</span>
           <span>{entry.action_id}</span>
         </div>
         <div>
-          <span className="meta-label">Area</span>
+          <span className="meta-label">{UI.area}</span>
           <span>{formatAreaLabel(entry.area)}</span>
         </div>
         {entry.target_id ? (
           <div>
-            <span className="meta-label">Target</span>
+            <span className="meta-label">{UI.target}</span>
             <ResourceRef kind="Target" value={entry.target_id} />
           </div>
         ) : null}
         {entry.alert_id ? (
           <div>
-            <span className="meta-label">Alert</span>
+            <span className="meta-label">{UI.alert}</span>
             <ResourceRef kind="Alert" value={entry.alert_id} />
           </div>
         ) : null}
         <div>
-          <span className="meta-label">Occurred</span>
+          <span className="meta-label">{UI.occurred}</span>
           <span>{entry.occurred_at ?? entry.started_at ?? "-"}</span>
         </div>
         <div>
-          <span className="meta-label">Duration</span>
+          <span className="meta-label">소요 시간</span>
           <span>{formatDuration(entry.duration_ms)}</span>
         </div>
         <div>
-          <span className="meta-label">Mutation</span>
-          <span>{entry.mutation_performed ? "Yes" : "No"}</span>
+          <span className="meta-label">변경 수행</span>
+          <span>{formatYesNo(entry.mutation_performed)}</span>
         </div>
         <div>
-          <span className="meta-label">Approval verified</span>
-          <span>{entry.approval_verified ? "Yes" : "No"}</span>
+          <span className="meta-label">승인 확인</span>
+          <span>{formatYesNo(entry.approval_verified)}</span>
         </div>
       </div>
       <p className="finding-hint">{statusHint(entry.status)}</p>
       <div className="action-card-links">
         {findingId ? (
           <Link to="/investigation" onClick={(event) => event.stopPropagation()}>
-            View Finding
+            {UI.viewFinding}
           </Link>
         ) : null}
-        <span className="muted">View Details</span>
+        <span className="muted">{UI.details}</span>
       </div>
     </button>
   );

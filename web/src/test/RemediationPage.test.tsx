@@ -112,10 +112,10 @@ describe("RemediationPage", () => {
 
   it("renders remediation plan with priorities and policy flags", async () => {
     renderPage();
-    expect(await screen.findByText("PriceBrain Remediation")).toBeInTheDocument();
-    expect(screen.getByText("Plan only")).toBeInTheDocument();
-    expect(screen.getAllByText("Human approval required").length).toBeGreaterThan(0);
-    expect(screen.getByText("Auto execution disabled")).toBeInTheDocument();
+    expect(await screen.findByText("PriceBrain 조치 계획")).toBeInTheDocument();
+    expect(screen.getByText("계획만 생성")).toBeInTheDocument();
+    expect(screen.getAllByText("사용자 승인 필요").length).toBeGreaterThan(0);
+    expect(screen.getByText("자동 실행 비활성화")).toBeInTheDocument();
     expect(screen.getByText("Review Runner Cycle")).toBeInTheDocument();
     expect(document.querySelector(".summary-count-card.priority-high")).toHaveTextContent("1");
     expect(document.querySelector(".summary-count-card.priority-medium")).toHaveTextContent("1");
@@ -125,8 +125,8 @@ describe("RemediationPage", () => {
   it("shows human approval required and auto_executable=false on cards", async () => {
     renderPage();
     await screen.findByText("Review Runner Cycle");
-    expect(screen.getAllByText("Required").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("No").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("필요").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("아니오").length).toBeGreaterThan(0);
   });
 
   it("filters by priority, area, failures-only, target, alert, and search", async () => {
@@ -134,24 +134,24 @@ describe("RemediationPage", () => {
     renderPage();
     await screen.findByRole("heading", { name: "Review Runner Cycle" });
 
-    await user.selectOptions(screen.getByLabelText("Priority filter"), "HIGH");
+    await user.selectOptions(screen.getByLabelText("우선순위 필터"), "HIGH");
     expect(screen.getByRole("heading", { name: "Review Runner Cycle" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Review Crawler Target" })).not.toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Priority filter"), "ALL");
-    await user.selectOptions(screen.getByLabelText("Area filter"), "crawler");
+    await user.selectOptions(screen.getByLabelText("우선순위 필터"), "ALL");
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "crawler");
     expect(screen.getByRole("heading", { name: "Review Crawler Target" })).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Area filter"), "ALL");
-    await user.click(screen.getByLabelText("failures only"));
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "ALL");
+    await user.click(screen.getByLabelText("실패 항목만"));
     expect(screen.queryByRole("heading", { name: "No Action Required" })).not.toBeInTheDocument();
 
-    await user.click(screen.getByLabelText("failures only"));
-    await user.type(screen.getByLabelText("Target filter"), "ssg_123");
+    await user.click(screen.getByLabelText("실패 항목만"));
+    await user.type(screen.getByLabelText("대상 필터"), "ssg_123");
     expect(screen.getByRole("heading", { name: "Review Crawler Target" })).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Target filter"));
-    await user.type(screen.getByLabelText("Remediation search"), "runner cycle");
+    await user.clear(screen.getByLabelText("대상 필터"));
+    await user.type(screen.getByLabelText("조치 계획 검색"), "runner cycle");
     expect(screen.getByRole("heading", { name: "Review Runner Cycle" })).toBeInTheDocument();
   });
 
@@ -160,7 +160,7 @@ describe("RemediationPage", () => {
     renderPage();
     await screen.findByRole("heading", { name: "Review Runner Cycle" });
     await user.click(screen.getByRole("button", { name: /Review Runner Cycle/i }));
-    const panel = screen.getByLabelText("Remediation action detail");
+    const panel = screen.getByLabelText("조치 상세");
     expect(within(panel).getByText("REVIEW_RUNNER")).toBeInTheDocument();
     expect(within(panel).getByText(/Inspect runner logs/)).toBeInTheDocument();
     expect(screen.queryByText("secret-token")).not.toBeInTheDocument();
@@ -169,8 +169,8 @@ describe("RemediationPage", () => {
 
   it("links to investigation without execute controls", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Remediation");
-    expect(screen.getAllByRole("link", { name: "View Finding" }).length).toBeGreaterThan(0);
+    await screen.findByText("PriceBrain 조치 계획");
+    expect(screen.getAllByRole("link", { name: "발견 사항 보기" }).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: /^execute$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /approve & execute/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^run$/i })).not.toBeInTheDocument();
@@ -183,7 +183,7 @@ describe("RemediationPage", () => {
       summary: { ...mockResponse.summary, total_actions: 0, actionable_actions: 0 },
     }));
     renderPage();
-    expect(await screen.findByText("현재 제안된 remediation action이 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("현재 제안된 조치가 없습니다.")).toBeInTheDocument();
   });
 });
 
@@ -206,7 +206,7 @@ describe("RemediationPage error states", () => {
       throw new ApiError(403, "이 작업을 볼 권한이 없습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Remediation 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("조치 계획 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
   });
 
   it("shows 500 message and retry", async () => {
@@ -214,8 +214,8 @@ describe("RemediationPage error states", () => {
       throw new ApiError(500, "운영 정보를 불러오지 못했습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Remediation 정보를 불러오지 못했습니다.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(await screen.findByText("조치 계획 정보를 불러오지 못했습니다.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });
 });
 
@@ -234,7 +234,7 @@ describe("RemediationPage loading", () => {
     );
     renderPage();
     expect(document.querySelector(".investigation-loading")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("PriceBrain Remediation")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("PriceBrain 조치 계획")).toBeInTheDocument());
   });
 });
 
@@ -246,7 +246,7 @@ describe("RemediationPage authorization", () => {
 
   it("calls getRemediation through operations API", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Remediation");
+    await screen.findByText("PriceBrain 조치 계획");
     expect(getRemediation).toHaveBeenCalled();
   });
 });

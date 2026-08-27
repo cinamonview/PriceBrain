@@ -6,6 +6,7 @@ import hashlib
 import re
 from typing import Any
 
+from pricebrain_app.pipeline.identity_variants import extract_variant_token
 from pricebrain_app.pipeline.utils import gpu_model_to_slug, seller_slug
 
 
@@ -14,15 +15,9 @@ def _slug_token(value: str) -> str:
     return token
 
 
-def _extract_variant_tokens(normalized_name: str) -> str | None:
+def _extract_variant_tokens(normalized_name: str, *, brand: str | None = None) -> str | None:
     """Extract compact variant token(s) for canonical ID — docs/08 §19 example."""
-    upper = normalized_name.upper()
-    tokens: list[str] = []
-    for candidate in ("SOLIDCORE", "SOLID CORE", "WINDFORCE", "GAMING OC", "SUPER"):
-        if candidate.replace(" ", "") in upper.replace(" ", ""):
-            tokens.append(candidate.replace(" ", ""))
-            break
-    return tokens[0] if tokens else None
+    return extract_variant_token(brand=brand, normalized_name=normalized_name)
 
 
 def build_canonical_product_id(data: dict[str, Any]) -> str | None:
@@ -44,7 +39,7 @@ def build_canonical_product_id(data: dict[str, Any]) -> str | None:
     if brand and gpu_model and vram_gb is not None:
         model_compact = gpu_model.replace(" ", "").upper()
         parts = [str(brand).upper(), model_compact]
-        variant = _extract_variant_tokens(str(normalized_name or ""))
+        variant = _extract_variant_tokens(str(normalized_name or ""), brand=str(brand))
         if variant:
             parts.append(variant)
         parts.append(f"{int(vram_gb)}GB")

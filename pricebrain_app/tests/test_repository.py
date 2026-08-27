@@ -15,7 +15,7 @@ from pricebrain_app.repository.listing_repository import (
 )
 from pricebrain_app.repository.price_history_repository import PriceHistoryRepository
 from pricebrain_app.repository.product_repository import ProductRepository
-from pricebrain_app.repository.service import save_validated_product
+from pricebrain_app.repository._testing.persist_helpers import save_validated_product
 from pricebrain_app.tests.fake_firestore import FakeFirestoreClient
 
 

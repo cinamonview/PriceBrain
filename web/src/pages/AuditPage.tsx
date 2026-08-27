@@ -16,16 +16,22 @@ import {
   countFailureEvents,
   flattenAuditEvents,
 } from "../utils/auditFilters";
+import {
+  UI,
+  formatAreaLabel,
+  formatAuditEventTypeLabel,
+  formatHealthLabel,
+} from "../utils/uiLabels";
 
 function auditErrorMessage(status: string, fallback: string | null): string | null {
   if (status === "unauthorized") {
     return "인증이 필요합니다.";
   }
   if (status === "forbidden") {
-    return "Audit 정보를 볼 권한이 없습니다.";
+    return "감사 로그 정보를 볼 권한이 없습니다.";
   }
   if (status === "error") {
-    return "Audit 정보를 불러오지 못했습니다.";
+    return "감사 로그 정보를 불러오지 못했습니다.";
   }
   return fallback;
 }
@@ -41,7 +47,7 @@ export function AuditPage() {
       const raw = await operationsApi.getAudit();
       const parsed = parseAuditResponse(raw);
       if (!parsed) {
-        throw new ApiError(500, "Audit 정보를 불러오지 못했습니다.");
+        throw new ApiError(500, "감사 로그 정보를 불러오지 못했습니다.");
       }
       return parsed;
     },
@@ -92,59 +98,61 @@ export function AuditPage() {
     <div className="page-stack audit-page">
       <div className="page-header">
         <div>
-          <h2>PriceBrain Audit Events</h2>
-          <p className="muted">Generated at {data.generated_at}</p>
+          <h2>PriceBrain {UI.audit}</h2>
+          <p className="muted">
+            {UI.generatedAt} {data.generated_at}
+          </p>
         </div>
         <button type="button" onClick={() => void refresh()}>
-          Refresh
+          {UI.refresh}
         </button>
       </div>
 
       <div className="summary-grid">
-        <HealthBadge label="Audit Health" status={data.health} />
+        <HealthBadge label={formatHealthLabel(UI.audit)} status={data.health} />
         <div className="summary-count-card">
-          <span>Total Events</span>
+          <span>전체 이벤트</span>
           <strong>{data.summary.total}</strong>
         </div>
         <div className="summary-count-card">
-          <span>Recent Events</span>
+          <span>최근 이벤트</span>
           <strong>{data.summary.recent}</strong>
         </div>
         <div className="summary-count-card execution-status-failed">
-          <span>Failure Events</span>
+          <span>실패 이벤트</span>
           <strong>{failureCount}</strong>
         </div>
         <div className="summary-count-card">
-          <span>Read Errors</span>
+          <span>읽기 오류</span>
           <strong>{data.summary.read_errors}</strong>
         </div>
       </div>
 
       <div className="section-card">
         <header>
-          <h3>Summary</h3>
+          <h3>{UI.summary}</h3>
         </header>
         <ul className="metric-list">
           <li>
-            <span>Alert events</span>
+            <span>알림 이벤트</span>
             <span>{data.summary.alert_events}</span>
           </li>
           <li>
-            <span>Notification events</span>
+            <span>알림 전송 이벤트</span>
             <span>{data.summary.notification_events}</span>
           </li>
           <li>
-            <span>Runner events</span>
+            <span>실행기 이벤트</span>
             <span>{data.summary.runner_events}</span>
           </li>
         </ul>
         {Object.keys(data.summary.by_type).length > 0 ? (
           <div className="metric-subsection">
-            <h4>By Event Type</h4>
+            <h4>이벤트 유형별</h4>
             <ul className="metric-list">
               {Object.entries(data.summary.by_type).map(([eventType, count]) => (
                 <li key={eventType}>
-                  <span>{eventType}</span>
+                  <span>{formatAuditEventTypeLabel(eventType)}</span>
                   <span>{count}</span>
                 </li>
               ))}
@@ -153,11 +161,11 @@ export function AuditPage() {
         ) : null}
         {Object.keys(areaCounts).length > 0 ? (
           <div className="metric-subsection">
-            <h4>By Area</h4>
+            <h4>영역별</h4>
             <ul className="metric-list">
               {Object.entries(areaCounts).map(([area, count]) => (
                 <li key={area}>
-                  <span>{area}</span>
+                  <span>{formatAreaLabel(area)}</span>
                   <span>{count}</span>
                 </li>
               ))}
@@ -165,7 +173,7 @@ export function AuditPage() {
           </div>
         ) : null}
         {data.health_reasons.length > 0 ? (
-          <p className="muted">Audit health reasons: {data.health_reasons.join(", ")}</p>
+          <p className="muted">감사 로그 상태 사유: {data.health_reasons.join(", ")}</p>
         ) : null}
       </div>
 
@@ -176,8 +184,8 @@ export function AuditPage() {
           {filteredSnapshots.length === 0 ? (
             <div className="query-state">
               {data.events.length === 0
-                ? "현재 기록된 audit event가 없습니다."
-                : "선택한 filter 조건에 맞는 audit event가 없습니다."}
+                ? "현재 기록된 감사 이벤트가 없습니다."
+                : "선택한 필터 조건에 맞는 감사 이벤트가 없습니다."}
             </div>
           ) : (
             filteredSnapshots.map((snapshot) => (

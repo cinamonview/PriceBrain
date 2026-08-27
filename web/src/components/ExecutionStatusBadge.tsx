@@ -28,11 +28,13 @@ interface ExecutionStatusBadgeProps {
   status: string;
 }
 
+import { formatExecutionStatusLabel } from "../utils/uiLabels";
+
 export function ExecutionStatusBadge({ status }: ExecutionStatusBadgeProps) {
   const normalized = normalizeExecutionStatus(status);
   return (
-    <span className={`execution-status execution-status-${normalized.toLowerCase()}`}>
-      {normalized}
+    <span className={`execution-status execution-status-${normalized.toLowerCase()}`} title={normalized}>
+      {formatExecutionStatusLabel(normalized)}
     </span>
   );
 }

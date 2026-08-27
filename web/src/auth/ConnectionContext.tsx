@@ -23,15 +23,8 @@ export function useConnectionStatus(): ConnectionContextValue {
   return context;
 }
 
+import { formatConnectionLabel } from "../utils/uiLabels";
+
 export function connectionLabel(status: ConnectionStatus): string {
-  switch (status) {
-    case "connected":
-      return "Connected";
-    case "degraded":
-      return "Auth required";
-    case "error":
-      return "Unavailable";
-    default:
-      return "Checking...";
-  }
+  return formatConnectionLabel(status);
 }

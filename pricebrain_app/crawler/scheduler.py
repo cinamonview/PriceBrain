@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Callable
 
+from pricebrain_app.crawler.adapters.elevenst import ElevenstCrawler
 from pricebrain_app.crawler.adapters.ssg import SSGCrawler
+from pricebrain_app.crawler.base import BaseCrawler
 from pricebrain_app.crawler.client import IngestClient
 from pricebrain_app.crawler.logging_utils import get_crawler_logger, safe_url_for_log
 from pricebrain_app.crawler.metrics import record_crawl_result, record_ingest_success
@@ -17,6 +19,11 @@ from pricebrain_app.crawler.target_repository import CrawlTargetRepository
 from pricebrain_app.crawler.targets import CrawlTarget, utc_now
 
 logger = get_crawler_logger()
+
+_CRAWLER_FACTORIES: dict[str, Callable[[], BaseCrawler]] = {
+    "ssg": SSGCrawler,
+    "elevenst": ElevenstCrawler,
+}
 
 
 @dataclass(frozen=True)
@@ -73,92 +80,91 @@ class CrawlerScheduler:
         if not targets:
             return results, CrawlerBatchSummary()
 
-        with self._crawler_factory() as crawler:
-            for target in targets:
-                logger.info(
-                    "scheduler running target",
-                    extra={
-                        "target_id": target.target_id,
-                        "url": safe_url_for_log(target.product_url),
-                    },
-                )
+        for target in targets:
+            logger.info(
+                "scheduler running target",
+                extra={
+                    "target_id": target.target_id,
+                    "url": safe_url_for_log(target.product_url),
+                },
+            )
+            log_observability_event(
+                logger,
+                "crawl_started",
+                target_id=target.target_id,
+                mall_id=target.mall_id,
+                product_url=target.product_url,
+            )
+            result = self._crawl_target(target)
+            record_crawl_result(result.status)
+            log_observability_event(
+                logger,
+                crawl_event_for_status(result.status.value),
+                target_id=target.target_id,
+                mall_id=target.mall_id,
+                status=result.status.value,
+                error_code=result.message or None,
+                elapsed_ms=result.elapsed_ms,
+                price=result.payload.price if result.payload is not None else None,
+                product_url=target.product_url,
+            )
+            if ingest and result.status == CrawlerStatus.SUCCESS:
                 log_observability_event(
                     logger,
-                    "crawl_started",
+                    "ingest_started",
                     target_id=target.target_id,
                     mall_id=target.mall_id,
-                    product_url=target.product_url,
                 )
-                result = self._crawl_target(crawler, target)
-                record_crawl_result(result.status)
-                log_observability_event(
-                    logger,
-                    crawl_event_for_status(result.status.value),
-                    target_id=target.target_id,
-                    mall_id=target.mall_id,
-                    status=result.status.value,
-                    error_code=result.message or None,
-                    elapsed_ms=result.elapsed_ms,
-                    price=result.payload.price if result.payload is not None else None,
-                    product_url=target.product_url,
-                )
-                if ingest and result.status == CrawlerStatus.SUCCESS:
-                    log_observability_event(
-                        logger,
-                        "ingest_started",
-                        target_id=target.target_id,
+                if ingest_client is None:
+                    result = CrawlerResult(
+                        status=CrawlerStatus.INGEST_ERROR,
                         mall_id=target.mall_id,
+                        product_url=target.product_url,
+                        external_product_id=result.external_product_id,
+                        message="IngestClient is required when ingest=True",
+                        retry_count=result.retry_count,
+                        elapsed_ms=result.elapsed_ms,
+                        crawled_at=result.crawled_at,
+                        payload=result.payload,
                     )
-                    if ingest_client is None:
-                        result = CrawlerResult(
-                            status=CrawlerStatus.INGEST_ERROR,
+                else:
+                    result = ingest_result(result, ingest_client)
+                    if result.status == CrawlerStatus.SUCCESS:
+                        record_ingest_success()
+                        log_observability_event(
+                            logger,
+                            "ingest_success",
+                            target_id=target.target_id,
                             mall_id=target.mall_id,
-                            product_url=target.product_url,
-                            external_product_id=result.external_product_id,
-                            message="IngestClient is required when ingest=True",
-                            retry_count=result.retry_count,
-                            elapsed_ms=result.elapsed_ms,
-                            crawled_at=result.crawled_at,
-                            payload=result.payload,
                         )
                     else:
-                        result = ingest_result(result, ingest_client)
-                        if result.status == CrawlerStatus.SUCCESS:
-                            record_ingest_success()
-                            log_observability_event(
-                                logger,
-                                "ingest_success",
-                                target_id=target.target_id,
-                                mall_id=target.mall_id,
-                            )
-                        else:
-                            log_observability_event(
-                                logger,
-                                "ingest_error",
-                                target_id=target.target_id,
-                                mall_id=target.mall_id,
-                                status=result.status.value,
-                            )
+                        log_observability_event(
+                            logger,
+                            "ingest_error",
+                            target_id=target.target_id,
+                            mall_id=target.mall_id,
+                            status=result.status.value,
+                        )
 
-                next_run = self.calculate_next_run(
-                    run_at,
-                    target.crawl_interval_seconds,
-                    result.status,
-                )
-                self._targets.update_after_crawl(
-                    target.target_id,
-                    result=result,
-                    next_crawl_at=next_run,
-                    crawled_at=parse_crawled_at(result, run_at),
-                )
-                log_observability_event(
-                    logger,
-                    "target_updated",
-                    target_id=target.target_id,
-                    mall_id=target.mall_id,
-                    status=result.status.value,
-                )
-                results.append(result)
+            next_run = self.calculate_next_run(
+                run_at,
+                target.crawl_interval_seconds,
+                result.status,
+            )
+            self._targets.update_after_crawl(
+                target.target_id,
+                result=result,
+                next_crawl_at=next_run,
+                crawled_at=parse_crawled_at(result, run_at),
+            )
+            log_observability_event(
+                logger,
+                "target_updated",
+                target_id=target.target_id,
+                mall_id=target.mall_id,
+                status=result.status.value,
+            )
+            results.append(result)
 
         return results, CrawlerBatchSummary.from_results(results)
 
@@ -180,16 +186,21 @@ class CrawlerScheduler:
         )
         return SchedulerRunResult(targets=due_targets, results=results, summary=summary)
 
-    def _crawl_target(self, crawler: SSGCrawler, target: CrawlTarget) -> CrawlerResult:
+    def _crawl_target(self, target: CrawlTarget) -> CrawlerResult:
         mall = target.mall_id.strip().lower()
-        if mall != "ssg":
+        if mall == "ssg":
+            factory: Callable[[], BaseCrawler] = self._crawler_factory
+        else:
+            factory = _CRAWLER_FACTORIES.get(mall)
+        if factory is None:
             return CrawlerResult(
                 status=CrawlerStatus.VALIDATION_ERROR,
                 mall_id=target.mall_id,
                 product_url=target.product_url,
                 message=f"Unsupported mall for scheduler crawl: {target.mall_id}",
             )
-        return crawler.crawl_product_url_result(target.product_url)
+        with factory() as crawler:
+            return crawler.crawl_product_url_result(target.product_url)
 
 
 def parse_crawled_at(result: CrawlerResult, fallback: datetime) -> datetime:

@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from pricebrain_app.pipeline.constants import GPU_BOARD_PARTNERS
 from pricebrain_app.pipeline.runner import run_pipeline
 from pricebrain_app.repository import constants as c
 from pricebrain_app.repository.exceptions import RepositoryValidationError
@@ -14,11 +15,12 @@ from pricebrain_app.repository.gpu_master_seed import (
     GPU_FAMILIES,
     GPU_MODELS,
     GPU_VENDORS,
+    ensure_gpu_master_seeded,
     seed_gpu_master,
 )
 from pricebrain_app.repository.gpu_repository import GpuRepository
 from pricebrain_app.repository.reference_repository import ReferenceRepository
-from pricebrain_app.repository.service import save_validated_product
+from pricebrain_app.repository._testing.persist_helpers import save_validated_product
 from pricebrain_app.tests.fake_firestore import FakeFirestoreClient
 
 
@@ -163,3 +165,127 @@ def test_c3_10_save_validated_product_uses_master_references(
     model = fake_db.get_document(f"{c.GPU_MODELS}/rtx_5080")
     assert model is not None
     assert model["family_id"] == "GEFORCE_RTX"
+
+
+def test_tier1_gigabyte_partner_resolve(fake_db: FakeFirestoreClient) -> None:
+    repo = ReferenceRepository(fake_db)
+    repo.resolve_board_partner("GIGABYTE")
+    partner = fake_db.get_document(f"{c.BOARD_PARTNERS}/GIGABYTE")
+    assert partner is not None
+    assert partner["slug"] == "GIGABYTE"
+
+
+def test_tier1_rtx5070_model_resolve(fake_db: FakeFirestoreClient) -> None:
+    repo = ReferenceRepository(fake_db)
+    repo.resolve_gpu_model("rtx_5070")
+    model = fake_db.get_document(f"{c.GPU_MODELS}/rtx_5070")
+    assert model is not None
+    assert model["gpu_model"] == "RTX 5070"
+    assert model["family_id"] == "GEFORCE_RTX"
+
+
+def test_tier1_amd_rx9070_model_seed(fake_db: FakeFirestoreClient) -> None:
+    model = fake_db.get_document(f"{c.GPU_MODELS}/rx_9070")
+    assert model is not None
+    assert model["vendor_id"] == "AMD"
+    assert fake_db.get_document(f"{c.GPU_FAMILIES}/RADEON_RX") is not None
+
+
+def test_tier1_ensure_seeds_when_legacy_zotac_only() -> None:
+    db = FakeFirestoreClient()
+    repo = GpuRepository(db)
+    repo.seed_vendors([GPU_VENDORS[0]])
+    repo.seed_families([GPU_FAMILIES[0]])
+    repo.upsert_model(
+        "rtx_5080",
+        dict(next(m for m in GPU_MODELS if m["slug"] == "rtx_5080")),
+    )
+    repo.seed_partners([BOARD_PARTNERS[0]])
+
+    assert repo.get_partner("GIGABYTE") is None
+    assert repo.get_model("rtx_5070") is None
+
+    ensure_gpu_master_seeded(db)
+
+    assert repo.get_partner("ZOTAC") is not None
+    assert repo.get_partner("GIGABYTE") is not None
+    assert repo.get_model("rtx_5070") is not None
+    assert repo.get_model("rtx_5080") is not None
+
+
+def test_tier1_elevenst_gigabyte_rtx5070_ingest_e2e() -> None:
+    from pathlib import Path
+
+    from pricebrain_app.crawler.adapters.elevenst import ElevenstProductParser
+
+    fixture = (
+        Path(__file__).parent / "fixtures" / "elevenst" / "product_detail_gpu.html"
+    )
+    url = "https://www.11st.co.kr/products/8083397777"
+    payload = ElevenstProductParser().parse(fixture.read_text(encoding="utf-8"), url=url)
+    validated = run_pipeline(payload.to_dict())
+
+    assert validated["board_partner_id"] == "GIGABYTE"
+    assert validated["gpu_model_id"] == "rtx_5070"
+
+    db = FakeFirestoreClient()
+    result = save_validated_product(db, dict(validated))
+
+    assert result["listing_id"] == "ELEVENST_8083397777"
+    product = db.get_document(f"{c.PRODUCTS}/{result['product_id']}")
+    assert product is not None
+    assert product["board_partner_id"] == "GIGABYTE"
+    assert product["gpu_model_id"] == "rtx_5070"
+
+
+def test_tier1_every_parser_board_partner_is_seeded() -> None:
+    """Parser-recognizable board partners must be persistable (no 422 drift)."""
+    seeded = {str(partner["slug"]) for partner in BOARD_PARTNERS}
+    unseeded = sorted(set(GPU_BOARD_PARTNERS) - seeded)
+    assert unseeded == [], (
+        f"parser recognizes {unseeded} but GPU master cannot store them — "
+        "add to BOARD_PARTNERS or remove from GPU_BOARD_PARTNERS"
+    )
+
+
+@pytest.mark.parametrize("partner", GPU_BOARD_PARTNERS)
+def test_tier1_parser_board_partner_resolves(
+    fake_db: FakeFirestoreClient, partner: str
+) -> None:
+    ReferenceRepository(fake_db).resolve_board_partner(partner)
+
+
+@pytest.mark.parametrize(
+    ("product_name", "expected_partner"),
+    [
+        ("SAPPHIRE PULSE 라데온 RX 9070 OC D6 16GB", "SAPPHIRE"),
+        ("XFX 라데온 RX 9070 QUICK 319 D6 16GB", "XFX"),
+    ],
+)
+def test_tier1_amd_partner_rx9070_ingest_e2e(
+    product_name: str, expected_partner: str
+) -> None:
+    validated = run_pipeline(
+        {
+            "mall": "ELEVENST",
+            "product_id": f"amd-{expected_partner.lower()}-001",
+            "product_name": product_name,
+            "price": 899000,
+            "seller": "테스트셀러",
+            "product_url": "https://www.11st.co.kr/products/8083397777",
+            "crawled_at": datetime(2026, 8, 26, 10, 0, 0, tzinfo=timezone.utc),
+        }
+    )
+    assert validated["board_partner_id"] == expected_partner
+    assert validated["gpu_model_id"] == "rx_9070"
+
+    db = FakeFirestoreClient()
+    result = save_validated_product(db, dict(validated))
+
+    product = db.get_document(f"{c.PRODUCTS}/{result['product_id']}")
+    assert product is not None
+    assert product["board_partner_id"] == expected_partner
+    assert product["gpu_model_id"] == "rx_9070"
+    model = db.get_document(f"{c.GPU_MODELS}/rx_9070")
+    assert model is not None
+    assert model["vendor_id"] == "AMD"

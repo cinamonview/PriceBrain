@@ -3,11 +3,10 @@ import type { AuditEventSnapshot } from "../api/types";
 import {
   deriveAuditArea,
   deriveAuditSeverity,
-  deriveAuditTitle,
   metadataString,
 } from "../utils/auditFilters";
-import { formatAreaLabel } from "../utils/investigationFilters";
 import { sanitizeMetadataRecord } from "../utils/securityUtils";
+import { UI, formatAreaLabel, formatAuditEventTypeLabel } from "../utils/uiLabels";
 import { AuditEventTypeBadge } from "./AuditEventTypeBadge";
 import { ResourceRef } from "./ResourceRef";
 import { SeverityBadge } from "./SeverityBadge";
@@ -24,11 +23,11 @@ export function AuditEventDetailPanel({ snapshot, onClose }: AuditEventDetailPan
 
   if (snapshot.read_error && !snapshot.event) {
     return (
-      <aside className="finding-detail-panel" aria-label="Audit event detail">
+      <aside className="finding-detail-panel" aria-label="감사 이벤트 상세">
         <div className="finding-detail-header">
-          <h3>Audit Event Detail</h3>
+          <h3>감사 이벤트 상세</h3>
           <button type="button" onClick={onClose}>
-            Close
+            {UI.close}
           </button>
         </div>
         <p className="finding-message">{snapshot.read_error}</p>
@@ -51,51 +50,52 @@ export function AuditEventDetailPanel({ snapshot, onClose }: AuditEventDetailPan
   const severity = deriveAuditSeverity(event.event_type, event.status);
 
   return (
-    <aside className="finding-detail-panel" aria-label="Audit event detail">
+    <aside className="finding-detail-panel" aria-label="감사 이벤트 상세">
       <div className="finding-detail-header">
-        <h3>Audit Event Detail</h3>
+        <h3>감사 이벤트 상세</h3>
         <button type="button" onClick={onClose}>
-          Close
+          {UI.close}
         </button>
       </div>
       <dl className="finding-detail-list">
         <div>
-          <dt>Event ID</dt>
+          <dt>이벤트 ID</dt>
           <dd>{event.event_id}</dd>
         </div>
         <div>
-          <dt>Event Type</dt>
+          <dt>이벤트 유형</dt>
           <dd>
             <AuditEventTypeBadge eventType={event.event_type} />
+            <span className="muted"> ({event.event_type})</span>
           </dd>
         </div>
         <div>
-          <dt>Occurred At</dt>
+          <dt>발생 시각</dt>
           <dd>{event.occurred_at}</dd>
         </div>
         <div>
-          <dt>Area</dt>
+          <dt>{UI.area}</dt>
           <dd>{formatAreaLabel(deriveAuditArea(event.event_type))}</dd>
         </div>
         <div>
-          <dt>Severity</dt>
+          <dt>{UI.severity}</dt>
           <dd>
             <SeverityBadge severity={severity} />
           </dd>
         </div>
         <div>
-          <dt>Title</dt>
-          <dd>{deriveAuditTitle(event)}</dd>
+          <dt>제목</dt>
+          <dd>{formatAuditEventTypeLabel(event.event_type)}</dd>
         </div>
         {event.status ? (
           <div>
-            <dt>Status / Result</dt>
+            <dt>상태 / 결과</dt>
             <dd>{event.status}</dd>
           </div>
         ) : null}
         {event.target_id ? (
           <div>
-            <dt>Target</dt>
+            <dt>{UI.target}</dt>
             <dd>
               <ResourceRef kind="Target" value={event.target_id} />
             </dd>
@@ -103,7 +103,7 @@ export function AuditEventDetailPanel({ snapshot, onClose }: AuditEventDetailPan
         ) : null}
         {event.alert_id ? (
           <div>
-            <dt>Alert</dt>
+            <dt>{UI.alert}</dt>
             <dd>
               <ResourceRef kind="Alert" value={event.alert_id} />
             </dd>
@@ -111,60 +111,60 @@ export function AuditEventDetailPanel({ snapshot, onClose }: AuditEventDetailPan
         ) : null}
         {findingId ? (
           <div>
-            <dt>Finding</dt>
+            <dt>발견 사항</dt>
             <dd>
               {findingId}
               <div className="action-card-links">
-                <Link to="/investigation">View Finding</Link>
+                <Link to="/investigation">{UI.viewFinding}</Link>
               </div>
             </dd>
           </div>
         ) : null}
         {executionId ? (
           <div>
-            <dt>Execution</dt>
+            <dt>실행</dt>
             <dd>
               {executionId}
               <div className="action-card-links">
-                <Link to="/execution">View Execution</Link>
+                <Link to="/execution">{UI.viewExecution}</Link>
               </div>
             </dd>
           </div>
         ) : null}
         {actionId ? (
           <div>
-            <dt>Remediation Action</dt>
+            <dt>조치</dt>
             <dd>
               {actionId}
               <div className="action-card-links">
-                <Link to="/remediation">View Remediation</Link>
+                <Link to="/remediation">{UI.viewRemediation}</Link>
               </div>
             </dd>
           </div>
         ) : null}
         <div>
-          <dt>Summary</dt>
+          <dt>{UI.summary}</dt>
           <dd>{snapshot.summary || "-"}</dd>
         </div>
         <div>
-          <dt>Message</dt>
+          <dt>{UI.message}</dt>
           <dd>{event.message || "-"}</dd>
         </div>
         {event.channel ? (
           <div>
-            <dt>Channel</dt>
+            <dt>채널</dt>
             <dd>{event.channel}</dd>
           </div>
         ) : null}
         {event.classification ? (
           <div>
-            <dt>Classification</dt>
+            <dt>분류</dt>
             <dd>{event.classification}</dd>
           </div>
         ) : null}
         {metadata ? (
           <div>
-            <dt>Metadata</dt>
+            <dt>{UI.metadata}</dt>
             <dd>
               <pre className="metadata-block">{JSON.stringify(metadata, null, 2)}</pre>
             </dd>

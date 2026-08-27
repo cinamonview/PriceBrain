@@ -10,6 +10,11 @@ from pricebrain_app.pipeline.exceptions import (
     GpuProductFilteredError,
     PipelineValidationError,
 )
+from pricebrain_app.pipeline.utils import normalize_mall_id
+from pricebrain_app.repository.exceptions import UnknownGpuModelError
+from pricebrain_app.repository.pending_gpu_model_repository import (
+    PendingGpuModelRepository,
+)
 from pricebrain_app.repository.validation_repository import ValidationRepository
 
 
@@ -37,3 +42,27 @@ def persist_pipeline_validation_failure(
         if product_name:
             details["product_name"] = str(product_name)
     return ValidationRepository(db).log_validation_failure(source, details)
+
+
+def quarantine_unknown_gpu_model(
+    db: FirestoreClient,
+    exc: UnknownGpuModelError,
+    *,
+    validated_data: dict[str, Any] | None = None,
+) -> str:
+    """Persist an unknown gpu_model_id to pending_gpu_models instead of discarding it.
+
+    Only the model identity and reviewer evidence are stored — no seller, price or
+    credential data, since none of it is needed to approve a GPU model.
+    """
+    data = validated_data or {}
+    return PendingGpuModelRepository(db).record_unknown_model(
+        gpu_model_id=exc.gpu_model_id,
+        display_name=data.get("gpu_model") or None,
+        gpu_series=data.get("gpu_series") or None,
+        mall_id=normalize_mall_id(data.get("mall_id")),
+        product_name=data.get("normalized_product_name")
+        or data.get("raw_product_name")
+        or None,
+        product_url=data.get("product_url") or None,
+    )

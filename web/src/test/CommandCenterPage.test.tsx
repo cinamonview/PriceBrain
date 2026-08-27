@@ -275,21 +275,21 @@ describe("CommandCenterPage", () => {
 
   it("renders health summary and area cards", async () => {
     renderPage();
-    expect(await screen.findByText("PriceBrain Command Center")).toBeInTheDocument();
-    expect(screen.getByText("Overall Health")).toBeInTheDocument();
-    expect(screen.getAllByText("DEGRADED").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("CRITICAL").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Crawler").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Price").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Notifications").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Runner").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Execution").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Auto-refresh every/)).toBeInTheDocument();
+    expect(await screen.findByText("PriceBrain 운영 센터")).toBeInTheDocument();
+    expect(screen.getByText("전체 상태")).toBeInTheDocument();
+    expect(screen.getAllByText("일부 문제").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("치명적").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("크롤러").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("가격").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("알림 전송").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("실행기").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("실행").length).toBeGreaterThan(0);
+    expect(screen.getByText(/초마다 자동 새로고침/)).toBeInTheDocument();
   });
 
   it("highlights critical, error, and warning findings from API data", async () => {
     renderPage();
-    await screen.findByText("Critical / Failure Highlights");
+    await screen.findByText("치명적 / 실패 하이라이트");
     expect(screen.getByText("RUNNER_CYCLE_FAILED")).toBeInTheDocument();
     expect(screen.getByText("CRAWLER_HTTP_ERROR")).toBeInTheDocument();
     expect(screen.getByText("SSG_ACCESS_DENIED")).toBeInTheDocument();
@@ -297,11 +297,11 @@ describe("CommandCenterPage", () => {
 
   it("shows crawler, price, alert, notification, runner, audit, execution, remediation summaries", async () => {
     renderPage();
-    await screen.findByText("Recent Execution History");
+    await screen.findByText("최근 실행 이력");
     expect(screen.getByText("Execution failed")).toBeInTheDocument();
     expect(screen.getAllByText("Notification failed").length).toBeGreaterThan(0);
     expect(screen.getAllByText("REVIEW_RUNNER").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Approval required: Yes/)).toBeInTheDocument();
+    expect(screen.getByText(/승인 필요: 예/)).toBeInTheDocument();
   });
 
   it("filters findings with failures-only, area, severity, and search", async () => {
@@ -309,31 +309,31 @@ describe("CommandCenterPage", () => {
     renderPage();
     await screen.findByText("RUNNER_CYCLE_FAILED");
 
-    await user.click(screen.getByLabelText("failures only"));
+    await user.click(screen.getByLabelText("실패 항목만"));
     expect(screen.getByText("RUNNER_CYCLE_FAILED")).toBeInTheDocument();
     expect(screen.queryByText("SSG_ACCESS_DENIED")).not.toBeInTheDocument();
 
-    await user.click(screen.getByLabelText("failures only"));
-    await user.selectOptions(screen.getByLabelText("Area filter"), "crawler");
+    await user.click(screen.getByLabelText("실패 항목만"));
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "crawler");
     expect(screen.getByText("SSG_ACCESS_DENIED")).toBeInTheDocument();
     expect(screen.queryByText("RUNNER_CYCLE_FAILED")).not.toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Area filter"), "ALL");
-    await user.selectOptions(screen.getByLabelText("Severity filter"), "WARNING");
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "ALL");
+    await user.selectOptions(screen.getByLabelText("심각도 필터"), "WARNING");
     expect(screen.getByText("SSG_ACCESS_DENIED")).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Severity filter"), "ALL");
-    await user.type(screen.getByLabelText("Command center search"), "HTTP");
+    await user.selectOptions(screen.getByLabelText("심각도 필터"), "ALL");
+    await user.type(screen.getByLabelText("운영 센터 검색"), "HTTP");
     expect(screen.getByText("CRAWLER_HTTP_ERROR")).toBeInTheDocument();
   });
 
   it("provides navigation links to investigation, remediation, execution, and audit", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Command Center");
-    expect(screen.getAllByRole("link", { name: "View Investigation" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: "View Remediation" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: "View Execution" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: "View Audit" }).length).toBeGreaterThan(0);
+    await screen.findByText("PriceBrain 운영 센터");
+    expect(screen.getAllByRole("link", { name: "조사 보기" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "조치 계획 보기" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "실행 이력 보기" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "감사 로그 보기" }).length).toBeGreaterThan(0);
   });
 
   it("redacts sensitive audit metadata in list rendering path", async () => {
@@ -349,7 +349,7 @@ describe("CommandCenterPage", () => {
       execution: { ...mockResponse.execution, entries: [] },
     }));
     renderPage();
-    expect(await screen.findByText("No recent execution entries.")).toBeInTheDocument();
+    expect(await screen.findByText("최근 실행 이력이 없습니다.")).toBeInTheDocument();
   });
 });
 
@@ -372,7 +372,7 @@ describe("CommandCenterPage error states", () => {
       throw new ApiError(403, "이 작업을 볼 권한이 없습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Command Center 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("운영 센터 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
   });
 
   it("shows 500 message and retry", async () => {
@@ -380,8 +380,8 @@ describe("CommandCenterPage error states", () => {
       throw new ApiError(500, "운영 정보를 불러오지 못했습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Command Center 정보를 불러오지 못했습니다.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(await screen.findByText("운영 센터 정보를 불러오지 못했습니다.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });
 });
 
@@ -400,14 +400,14 @@ describe("CommandCenterPage loading", () => {
     );
     renderPage();
     expect(document.querySelector(".investigation-loading")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("PriceBrain Command Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("PriceBrain 운영 센터")).toBeInTheDocument());
   });
 });
 
 describe("CommandCenterPage read-only security", () => {
   it("does not expose execute controls", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Command Center");
+    await screen.findByText("PriceBrain 운영 센터");
     expect(screen.queryByRole("button", { name: /^execute$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /run$/i })).not.toBeInTheDocument();

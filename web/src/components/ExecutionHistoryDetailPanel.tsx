@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import type { ExecutionHistoryEntry } from "../api/types";
-import { formatAreaLabel } from "../utils/investigationFilters";
 import { statusHint } from "../utils/executionFilters";
 import { sanitizeMetadataRecord } from "../utils/securityUtils";
+import { UI, formatAreaLabel, formatYesNo } from "../utils/uiLabels";
 import { ExecutionStatusBadge } from "./ExecutionStatusBadge";
 import { ResourceRef } from "./ResourceRef";
 
@@ -38,43 +38,43 @@ export function ExecutionHistoryDetailPanel({
   const findingId = findingIdFromMetadata(entry.metadata);
 
   return (
-    <aside className="finding-detail-panel" aria-label="Execution history detail">
+    <aside className="finding-detail-panel" aria-label="실행 이력 상세">
       <div className="finding-detail-header">
-        <h3>Execution Detail</h3>
+        <h3>실행 상세</h3>
         <button type="button" onClick={onClose}>
-          Close
+          {UI.close}
         </button>
       </div>
       <dl className="finding-detail-list">
         <div>
-          <dt>Execution ID</dt>
+          <dt>실행 ID</dt>
           <dd>{entry.execution_id}</dd>
         </div>
         <div>
-          <dt>Action ID</dt>
+          <dt>조치 ID</dt>
           <dd>{entry.action_id}</dd>
         </div>
         <div>
-          <dt>Action Type</dt>
+          <dt>조치 유형</dt>
           <dd>{entry.action_type}</dd>
         </div>
         <div>
-          <dt>Mode</dt>
+          <dt>실행 모드</dt>
           <dd>{entry.mode}</dd>
         </div>
         <div>
-          <dt>Status</dt>
+          <dt>{UI.status}</dt>
           <dd>
             <ExecutionStatusBadge status={entry.status} />
           </dd>
         </div>
         <div>
-          <dt>Area</dt>
+          <dt>{UI.area}</dt>
           <dd>{formatAreaLabel(entry.area)}</dd>
         </div>
         {entry.target_id ? (
           <div>
-            <dt>Target</dt>
+            <dt>{UI.target}</dt>
             <dd>
               <ResourceRef kind="Target" value={entry.target_id} />
             </dd>
@@ -82,64 +82,64 @@ export function ExecutionHistoryDetailPanel({
         ) : null}
         {entry.alert_id ? (
           <div>
-            <dt>Alert</dt>
+            <dt>{UI.alert}</dt>
             <dd>
               <ResourceRef kind="Alert" value={entry.alert_id} />
             </dd>
           </div>
         ) : null}
         <div>
-          <dt>Started At</dt>
+          <dt>시작 시각</dt>
           <dd>{entry.started_at ?? "-"}</dd>
         </div>
         <div>
-          <dt>Completed At</dt>
+          <dt>완료 시각</dt>
           <dd>{entry.completed_at ?? "-"}</dd>
         </div>
         <div>
-          <dt>Occurred At</dt>
+          <dt>발생 시각</dt>
           <dd>{entry.occurred_at ?? "-"}</dd>
         </div>
         <div>
-          <dt>Duration</dt>
+          <dt>소요 시간</dt>
           <dd>{formatDuration(entry.duration_ms)}</dd>
         </div>
         <div>
-          <dt>Mutation Performed</dt>
-          <dd>{entry.mutation_performed ? "Yes" : "No"}</dd>
+          <dt>변경 수행</dt>
+          <dd>{formatYesNo(entry.mutation_performed)}</dd>
         </div>
         <div>
-          <dt>Approval Verified</dt>
-          <dd>{entry.approval_verified ? "Yes" : "No"}</dd>
+          <dt>승인 확인</dt>
+          <dd>{formatYesNo(entry.approval_verified)}</dd>
         </div>
         <div>
-          <dt>Execution Policy</dt>
+          <dt>실행 정책</dt>
           <dd>{statusHint(entry.status)}</dd>
         </div>
         <div>
-          <dt>Result / Message</dt>
+          <dt>결과 / 메시지</dt>
           <dd>{entry.message || "-"}</dd>
         </div>
         {entry.error_code ? (
           <div>
-            <dt>Failure Reason</dt>
+            <dt>실패 사유</dt>
             <dd>{entry.error_code}</dd>
           </div>
         ) : null}
         {findingId ? (
           <div>
-            <dt>Source Finding</dt>
+            <dt>원본 발견 사항</dt>
             <dd>
               {findingId}
               <div className="action-card-links">
-                <Link to="/investigation">View Finding</Link>
+                <Link to="/investigation">{UI.viewFinding}</Link>
               </div>
             </dd>
           </div>
         ) : null}
         {metadata ? (
           <div>
-            <dt>Metadata</dt>
+            <dt>{UI.metadata}</dt>
             <dd>
               <pre className="metadata-block">{JSON.stringify(metadata, null, 2)}</pre>
             </dd>

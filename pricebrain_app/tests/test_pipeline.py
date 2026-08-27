@@ -84,6 +84,37 @@ def test_gpu_parser_no_gpu_match() -> None:
     assert has_gpu_keyword("일반 USB 케이블 1m") is False
 
 
+@pytest.mark.parametrize(
+    ("product_name", "expected_partner"),
+    [
+        ("SAPPHIRE PULSE 라데온 RX 9070 OC D6 16GB", "SAPPHIRE"),
+        ("XFX 라데온 RX 9070 QUICK 319 D6 16GB", "XFX"),
+    ],
+)
+def test_gpu_parser_extracts_amd_board_partners(
+    product_name: str, expected_partner: str
+) -> None:
+    data = parse_gpu(
+        normalize(
+            clean(
+                {
+                    "mall": "ELEVENST",
+                    "product_id": "amd-partner-001",
+                    "product_name": product_name,
+                    "price": 899000,
+                    "seller": "테스트셀러",
+                    "product_url": "https://www.11st.co.kr/products/8083397777",
+                }
+            )
+        )
+    )
+    assert data["brand"] == expected_partner
+    assert data["board_partner_id"] == expected_partner
+    assert data["gpu_series"] == "RX"
+    assert data["gpu_model"] == "RX 9070"
+    assert data["gpu_model_id"] == "rx_9070"
+
+
 def test_matcher_builds_canonical_id(sample_raw_product: dict) -> None:
     data = match_product(parse_gpu(normalize(clean(sample_raw_product))))
     assert data["canonical_product_id"] == "ZOTAC-RTX5080-SOLIDCORE-16GB"

@@ -1,9 +1,9 @@
 def test_repository_modules_import() -> None:
+    import pricebrain_app.repository as repository
     from pricebrain_app.repository import (  # noqa: F401
         ListingRepository,
         PriceHistoryRepository,
         ProductRepository,
-        save_validated_product,
     )
     from pricebrain_app.repository.crawl_repository import CrawlRepository
     from pricebrain_app.repository.gpu_repository import GpuRepository
@@ -16,3 +16,4 @@ def test_repository_modules_import() -> None:
     assert MallRepository.__name__ == "MallRepository"
     assert SellerRepository.__name__ == "SellerRepository"
     assert ValidationRepository.__name__ == "ValidationRepository"
+    assert "save_validated_product" not in repository.__all__

@@ -51,6 +51,10 @@ service cloud.firestore {
     match /validation_logs/{docId} {
       allow read, write: if false;
     }
+    // Unapproved GPU models awaiting review — never client-visible, Admin SDK only.
+    match /pending_gpu_models/{docId} {
+      allow read, write: if false;
+    }
 
     // --- User data (Phase 2+) ---
     match /users/{userId} {

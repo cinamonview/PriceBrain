@@ -83,9 +83,4 @@ export function filterInvestigationFindings(
   });
 }
 
-export function formatAreaLabel(area: string): string {
-  if (!area) {
-    return "Unknown";
-  }
-  return area.charAt(0).toUpperCase() + area.slice(1);
-}
+export { formatAreaLabel } from "./uiLabels";

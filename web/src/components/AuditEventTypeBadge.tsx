@@ -26,11 +26,16 @@ interface AuditEventTypeBadgeProps {
   eventType: string;
 }
 
+import { formatAuditEventTypeLabel } from "../utils/uiLabels";
+
 export function AuditEventTypeBadge({ eventType }: AuditEventTypeBadgeProps) {
   const normalized = normalizeAuditEventType(eventType);
   return (
-    <span className={`audit-event-type audit-event-type-${normalized.toLowerCase()}`}>
-      {eventType}
+    <span
+      className={`audit-event-type audit-event-type-${normalized.toLowerCase()}`}
+      title={eventType}
+    >
+      {formatAuditEventTypeLabel(eventType)}
     </span>
   );
 }

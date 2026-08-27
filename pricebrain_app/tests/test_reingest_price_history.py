@@ -8,7 +8,7 @@ import pytest
 
 from pricebrain_app.pipeline.runner import run_pipeline
 from pricebrain_app.repository import constants as c
-from pricebrain_app.repository.service import save_validated_product
+from pricebrain_app.repository._testing.persist_helpers import save_validated_product
 from pricebrain_app.tests.fake_firestore import FakeFirestoreClient
 from pricebrain_app.tests.test_repository import (
     _history_count,

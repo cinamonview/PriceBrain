@@ -18,11 +18,16 @@ interface SeverityBadgeProps {
   compact?: boolean;
 }
 
+import { formatSeverityLabel } from "../utils/uiLabels";
+
 export function SeverityBadge({ severity, compact = false }: SeverityBadgeProps) {
   const normalized = normalizeSeverity(severity);
   return (
-    <span className={`severity-badge severity-${normalized.toLowerCase()}${compact ? " compact" : ""}`}>
-      {normalized}
+    <span
+      className={`severity-badge severity-${normalized.toLowerCase()}${compact ? " compact" : ""}`}
+      title={normalized}
+    >
+      {formatSeverityLabel(normalized)}
     </span>
   );
 }

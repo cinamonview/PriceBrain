@@ -1,0 +1,40 @@
+{
+  "curPage": 2,
+  "totalPage": 105,
+  "totalCount": 8341,
+  "searchMeta": {
+    "searchKeyword": "RTX 5070"
+  },
+  "data": [
+    {
+      "groupName": "commonProduct",
+      "moduleType": "GRID_6X1",
+      "items": [
+        {
+          "id": 8875337696,
+          "title": "GIGABYTE 지포스 RTX 5070 GAMING OC D7 12GB",
+          "finalPrc": 1478000,
+          "sellerNickName": "제이씨현",
+          "isSoldOut": false,
+          "listType": "FOCUS"
+        },
+        {
+          "id": 8123456710,
+          "title": "COLORFUL 지포스 RTX 5070 iGame Ultra W OC D7 12GB",
+          "finalPrc": 1350000,
+          "sellerNickName": "컬러풀코리아",
+          "isSoldOut": false,
+          "listType": "FOCUS"
+        },
+        {
+          "id": 8123456711,
+          "title": "ZOTAC GAMING 지포스 RTX 4060 Ti Twin Edge OC D6 8GB",
+          "finalPrc": 559000,
+          "sellerNickName": "디앤디컴",
+          "isSoldOut": true,
+          "listType": "FOCUS"
+        }
+      ]
+    }
+  ]
+}

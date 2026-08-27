@@ -1,6 +1,7 @@
 import type { InvestigationFinding } from "../api/types";
 import { sanitizeMetadataRecord } from "../utils/securityUtils";
 import { formatAreaLabel } from "../utils/investigationFilters";
+import { UI, formatFindingTitle } from "../utils/uiLabels";
 import { ResourceRef } from "./ResourceRef";
 import { SeverityBadge } from "./SeverityBadge";
 
@@ -20,39 +21,39 @@ export function FindingDetailPanel({ finding, onClose }: FindingDetailPanelProps
       : null;
 
   return (
-    <aside className="finding-detail-panel" aria-label="Finding detail">
+    <aside className="finding-detail-panel" aria-label="발견 사항 상세">
       <div className="finding-detail-header">
-        <h3>Finding Detail</h3>
+        <h3>발견 사항 상세</h3>
         <button type="button" onClick={onClose}>
-          Close
+          {UI.close}
         </button>
       </div>
       <dl className="finding-detail-list">
         <div>
-          <dt>Finding Code</dt>
+          <dt>발견 코드</dt>
           <dd>{finding.code}</dd>
         </div>
         <div>
-          <dt>Severity</dt>
+          <dt>{UI.severity}</dt>
           <dd>
             <SeverityBadge severity={finding.severity} />
           </dd>
         </div>
         <div>
-          <dt>Area</dt>
+          <dt>{UI.area}</dt>
           <dd>{formatAreaLabel(finding.area)}</dd>
         </div>
         <div>
-          <dt>Title</dt>
-          <dd>{finding.title}</dd>
+          <dt>제목</dt>
+          <dd>{formatFindingTitle(finding.code, finding.title)}</dd>
         </div>
         <div>
-          <dt>Message</dt>
+          <dt>{UI.message}</dt>
           <dd>{finding.message}</dd>
         </div>
         {finding.target_id ? (
           <div>
-            <dt>Target ID</dt>
+            <dt>대상 ID</dt>
             <dd>
               <ResourceRef kind="Target" value={finding.target_id} />
             </dd>
@@ -60,7 +61,7 @@ export function FindingDetailPanel({ finding, onClose }: FindingDetailPanelProps
         ) : null}
         {finding.alert_id ? (
           <div>
-            <dt>Alert ID</dt>
+            <dt>알림 ID</dt>
             <dd>
               <ResourceRef kind="Alert" value={finding.alert_id} />
             </dd>
@@ -68,19 +69,19 @@ export function FindingDetailPanel({ finding, onClose }: FindingDetailPanelProps
         ) : null}
         {finding.event_id ? (
           <div>
-            <dt>Event ID</dt>
+            <dt>이벤트 ID</dt>
             <dd>{finding.event_id}</dd>
           </div>
         ) : null}
         {finding.occurred_at ? (
           <div>
-            <dt>Occurred At</dt>
+            <dt>발생 시각</dt>
             <dd>{finding.occurred_at}</dd>
           </div>
         ) : null}
         {metadata ? (
           <div>
-            <dt>Metadata</dt>
+            <dt>{UI.metadata}</dt>
             <dd>
               <pre className="metadata-block">{JSON.stringify(metadata, null, 2)}</pre>
             </dd>

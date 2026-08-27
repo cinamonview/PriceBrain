@@ -5,7 +5,11 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from pricebrain_app.pipeline.constants import GPU_BOARD_PARTNERS, GPU_FILTER_KEYWORDS
+from pricebrain_app.pipeline.board_partners import (
+    board_partner_from_brand_eng_nm,
+    canonical_board_partner,
+)
+from pricebrain_app.pipeline.constants import GPU_FILTER_KEYWORDS
 from pricebrain_app.pipeline.utils import gpu_model_to_slug
 
 _MPN_PATTERN = re.compile(r"\b([A-Z]{2,3}-[A-Z0-9-]{5,})\b")
@@ -22,11 +26,7 @@ _VRAM_PATTERN = re.compile(
 
 
 def _extract_brand(text: str) -> str | None:
-    upper = text.upper()
-    for brand in sorted(GPU_BOARD_PARTNERS, key=len, reverse=True):
-        if brand in upper:
-            return brand
-    return None
+    return canonical_board_partner(text)
 
 
 def _extract_gpu_model(text: str) -> tuple[str | None, str | None]:
@@ -77,16 +77,19 @@ def has_gpu_keyword(text: str) -> bool:
 
 def parse_gpu(data: dict[str, Any]) -> dict[str, Any]:
     result = dict(data)
-    source_text = (
-        str(result.get("normalized_product_name"))
-        or str(result.get("raw_product_name"))
-        or str(result.get("product_name"))
-        or ""
-    )
+    raw_text = str(result.get("raw_product_name") or result.get("product_name") or "")
+    normalized_text = str(result.get("normalized_product_name") or "")
+    source_text = normalized_text or raw_text
     if not source_text:
         return result
 
-    brand = _extract_brand(source_text)
+    # Partner identity is read from raw+normalized so a marketing-stripped
+    # normalized name cannot hide a Korean or bracketed board partner.
+    title_for_partner = f"{raw_text} {normalized_text}".strip() or source_text
+    brand = _extract_brand(title_for_partner)
+    if not brand:
+        brand_eng = str(result.get("brand_eng_nm") or "").strip() or None
+        brand = board_partner_from_brand_eng_nm(brand_eng, title=title_for_partner)
     if brand:
         result["brand"] = brand
         result["board_partner_id"] = brand
@@ -102,7 +105,9 @@ def parse_gpu(data: dict[str, Any]) -> dict[str, Any]:
     if vram is not None:
         result["vram_gb"] = vram
 
-    mpn = _extract_manufacturer_part_number(source_text)
+    mpn = result.get("manufacturer_part_number")
+    if not mpn:
+        mpn = _extract_manufacturer_part_number(source_text)
     if mpn:
         result["manufacturer_part_number"] = mpn
 

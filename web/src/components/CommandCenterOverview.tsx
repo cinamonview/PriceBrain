@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { HealthBadge } from "./HealthBadge";
+import { UI, formatAutoRefresh, formatHealthLabel } from "../utils/uiLabels";
 
 interface CommandCenterOverviewProps {
   generatedAt: string;
@@ -34,45 +35,49 @@ export function CommandCenterOverview({
     <section className="section-card command-center-overview">
       <div className="page-header">
         <div>
-          <h2>PriceBrain Command Center</h2>
-          <p className="muted">Generated at {generatedAt}</p>
-          {lastRefreshedAt ? <p className="muted">Last refresh: {lastRefreshedAt}</p> : null}
+          <h2>PriceBrain {UI.commandCenter}</h2>
           <p className="muted">
-            Auto-refresh every {Math.round(refreshIntervalMs / 1000)}s (read-only)
+            {UI.generatedAt} {generatedAt}
           </p>
+          {lastRefreshedAt ? (
+            <p className="muted">
+              {UI.lastRefresh}: {lastRefreshedAt}
+            </p>
+          ) : null}
+          <p className="muted">{formatAutoRefresh(Math.round(refreshIntervalMs / 1000))}</p>
         </div>
         <button type="button" onClick={onRefresh}>
-          Refresh
+          {UI.refresh}
         </button>
       </div>
 
       <div className="health-grid command-center-health-grid">
-        <HealthBadge label="Overall Health" status={overallHealth} />
-        <HealthBadge label="Investigation Health" status={investigationHealth} />
-        <HealthBadge label="Remediation Health" status={remediationHealth} />
-        <HealthBadge label="Execution Health" status={executionHealth} />
+        <HealthBadge label={formatHealthLabel("전체")} status={overallHealth} />
+        <HealthBadge label={formatHealthLabel(UI.investigation)} status={investigationHealth} />
+        <HealthBadge label={formatHealthLabel(UI.remediation)} status={remediationHealth} />
+        <HealthBadge label={formatHealthLabel("실행")} status={executionHealth} />
         <div className="summary-count-card execution-status-failed">
-          <span>Failure Count</span>
+          <span>실패 건수</span>
           <strong>{failureCount}</strong>
         </div>
         <div className="summary-count-card">
-          <span>Read Errors</span>
+          <span>읽기 오류</span>
           <strong>{readErrorCount}</strong>
         </div>
       </div>
 
       {dashboardReasons.length > 0 ? (
-        <p className="muted">Dashboard health reasons: {dashboardReasons.join(", ")}</p>
+        <p className="muted">대시보드 상태 사유: {dashboardReasons.join(", ")}</p>
       ) : null}
       {executionReasons.length > 0 ? (
-        <p className="muted">Execution health reasons: {executionReasons.join(", ")}</p>
+        <p className="muted">실행 상태 사유: {executionReasons.join(", ")}</p>
       ) : null}
 
       <div className="action-card-links">
-        <Link to="/investigation">View Investigation</Link>
-        <Link to="/remediation">View Remediation</Link>
-        <Link to="/execution">View Execution</Link>
-        <Link to="/audit">View Audit</Link>
+        <Link to="/investigation">{UI.viewInvestigation}</Link>
+        <Link to="/remediation">{UI.viewRemediation}</Link>
+        <Link to="/execution">{UI.viewExecution}</Link>
+        <Link to="/audit">{UI.viewAudit}</Link>
       </div>
     </section>
   );

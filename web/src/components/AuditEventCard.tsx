@@ -3,10 +3,9 @@ import type { AuditEventSnapshot } from "../api/types";
 import {
   deriveAuditArea,
   deriveAuditSeverity,
-  deriveAuditTitle,
   metadataString,
 } from "../utils/auditFilters";
-import { formatAreaLabel } from "../utils/investigationFilters";
+import { UI, formatAreaLabel, formatAuditEventTypeLabel } from "../utils/uiLabels";
 import { AuditEventTypeBadge, normalizeAuditEventType } from "./AuditEventTypeBadge";
 import { ResourceRef } from "./ResourceRef";
 import { SeverityBadge } from "./SeverityBadge";
@@ -27,9 +26,9 @@ export function AuditEventCard({ snapshot, selected = false, onSelect }: AuditEv
         aria-pressed={selected}
       >
         <div className="finding-card-header">
-          <span className="execution-status execution-status-failed">INVALID</span>
+          <span className="execution-status execution-status-failed">무효</span>
         </div>
-        <h4>Invalid audit event</h4>
+        <h4>무효한 감사 이벤트</h4>
         <p className="finding-message">{snapshot.read_error}</p>
       </button>
     );
@@ -57,43 +56,43 @@ export function AuditEventCard({ snapshot, selected = false, onSelect }: AuditEv
         <AuditEventTypeBadge eventType={event.event_type} />
         <SeverityBadge severity={severity} compact />
       </div>
-      <h4>{deriveAuditTitle(event)}</h4>
-      <p className="finding-cause-label">Message:</p>
+      <h4>{formatAuditEventTypeLabel(event.event_type)}</h4>
+      <p className="finding-cause-label">{UI.message}:</p>
       <p className="finding-message">{event.message || snapshot.summary || "-"}</p>
       <div className="finding-meta-grid">
         <div>
-          <span className="meta-label">Event ID</span>
+          <span className="meta-label">이벤트 ID</span>
           <span>{event.event_id}</span>
         </div>
         <div>
-          <span className="meta-label">Occurred</span>
+          <span className="meta-label">{UI.occurred}</span>
           <span>{event.occurred_at}</span>
         </div>
         <div>
-          <span className="meta-label">Area</span>
+          <span className="meta-label">{UI.area}</span>
           <span>{formatAreaLabel(area)}</span>
         </div>
         {event.status ? (
           <div>
-            <span className="meta-label">Status</span>
+            <span className="meta-label">{UI.status}</span>
             <span>{event.status}</span>
           </div>
         ) : null}
         {event.target_id ? (
           <div>
-            <span className="meta-label">Target</span>
+            <span className="meta-label">{UI.target}</span>
             <ResourceRef kind="Target" value={event.target_id} />
           </div>
         ) : null}
         {event.alert_id ? (
           <div>
-            <span className="meta-label">Alert</span>
+            <span className="meta-label">{UI.alert}</span>
             <ResourceRef kind="Alert" value={event.alert_id} />
           </div>
         ) : null}
         {findingId ? (
           <div>
-            <span className="meta-label">Finding</span>
+            <span className="meta-label">발견 사항</span>
             <span>{findingId}</span>
           </div>
         ) : null}
@@ -101,20 +100,20 @@ export function AuditEventCard({ snapshot, selected = false, onSelect }: AuditEv
       <div className="action-card-links">
         {findingId ? (
           <Link to="/investigation" onClick={(event) => event.stopPropagation()}>
-            View Finding
+            {UI.viewFinding}
           </Link>
         ) : null}
         {executionId ? (
           <Link to="/execution" onClick={(event) => event.stopPropagation()}>
-            View Execution
+            {UI.viewExecution}
           </Link>
         ) : null}
         {actionId ? (
           <Link to="/remediation" onClick={(event) => event.stopPropagation()}>
-            View Remediation
+            {UI.viewRemediation}
           </Link>
         ) : null}
-        <span className="muted">View Details</span>
+        <span className="muted">{UI.details}</span>
       </div>
     </button>
   );

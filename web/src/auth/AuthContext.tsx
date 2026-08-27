@@ -16,6 +16,7 @@ import {
 import type { OpsRole } from "../api/types";
 import { createOperationsApi, type OperationsApi } from "../api/operationsApi";
 import { getFirebaseAuth, isFirebaseConfigured } from "../firebase";
+import { formatRoleLabel } from "../utils/uiLabels";
 
 export interface AuthUser {
   uid: string;
@@ -128,13 +129,13 @@ export function useAuth(): AuthContextValue {
 
 export function formatPrimaryRole(roles: OpsRole[]): string {
   if (roles.includes("OPS_ADMIN")) {
-    return "OPS ADMIN";
+    return formatRoleLabel("OPS_ADMIN");
   }
   if (roles.includes("OPS_OPERATOR")) {
-    return "OPS OPERATOR";
+    return formatRoleLabel("OPS_OPERATOR");
   }
   if (roles.includes("OPS_VIEWER")) {
-    return "OPS VIEWER";
+    return formatRoleLabel("OPS_VIEWER");
   }
-  return "NO ROLE";
+  return formatRoleLabel("NO_ROLE");
 }

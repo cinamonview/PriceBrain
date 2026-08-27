@@ -120,18 +120,18 @@ describe("InvestigationPage", () => {
 
   it("renders investigation page with health and findings", async () => {
     renderPage();
-    expect(await screen.findByText("PriceBrain Investigation")).toBeInTheDocument();
-    expect(screen.getByText("Investigation Health")).toBeInTheDocument();
-    expect(screen.getAllByText("DEGRADED").length).toBeGreaterThan(0);
-    expect(screen.getByText("Runner Cycle Failure Repeated")).toBeInTheDocument();
-    expect(screen.getByText("Crawler Read Error")).toBeInTheDocument();
-    expect(screen.getByText("Crawler Access Denied")).toBeInTheDocument();
-    expect(screen.getByText("Runner Healthy")).toBeInTheDocument();
+    expect(await screen.findByText("PriceBrain 조사")).toBeInTheDocument();
+    expect(screen.getByText("조사 상태")).toBeInTheDocument();
+    expect(screen.getAllByText("일부 문제").length).toBeGreaterThan(0);
+    expect(screen.getByText("실행기 주기 실패 반복")).toBeInTheDocument();
+    expect(screen.getByText("크롤러 읽기 오류")).toBeInTheDocument();
+    expect(screen.getByText("크롤러 접근 거부")).toBeInTheDocument();
+    expect(screen.getByText("실행기 정상")).toBeInTheDocument();
   });
 
   it("renders severity summary cards from contract", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Investigation");
+    await screen.findByText("PriceBrain 조사");
     expect(document.querySelector(".summary-count-card.severity-critical")).toHaveTextContent("1");
     expect(document.querySelector(".summary-count-card.severity-error")).toHaveTextContent("1");
     expect(document.querySelector(".summary-count-card.severity-warning")).toHaveTextContent("1");
@@ -141,37 +141,37 @@ describe("InvestigationPage", () => {
   it("filters findings by severity, area, failures-only, target, alert", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByRole("heading", { name: "Runner Cycle Failure Repeated" });
+    await screen.findByRole("heading", { name: "실행기 주기 실패 반복" });
 
-    await user.selectOptions(screen.getByLabelText("Severity filter"), "CRITICAL");
-    expect(screen.getByRole("heading", { name: "Runner Cycle Failure Repeated" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Crawler Read Error" })).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("심각도 필터"), "CRITICAL");
+    expect(screen.getByRole("heading", { name: "실행기 주기 실패 반복" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "크롤러 읽기 오류" })).not.toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Severity filter"), "ALL");
-    await user.selectOptions(screen.getByLabelText("Area filter"), "crawler");
-    expect(screen.getByRole("heading", { name: "Crawler Read Error" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Runner Cycle Failure Repeated" })).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("심각도 필터"), "ALL");
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "crawler");
+    expect(screen.getByRole("heading", { name: "크롤러 읽기 오류" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "실행기 주기 실패 반복" })).not.toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Area filter"), "ALL");
-    await user.click(screen.getByLabelText("failures only"));
-    expect(screen.queryByRole("heading", { name: "Runner Healthy" })).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "ALL");
+    await user.click(screen.getByLabelText("실패 항목만"));
+    expect(screen.queryByRole("heading", { name: "실행기 정상" })).not.toBeInTheDocument();
 
-    await user.click(screen.getByLabelText("failures only"));
-    await user.type(screen.getByLabelText("Target filter"), "ssg_123");
-    expect(screen.getByRole("heading", { name: "Crawler Read Error" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Crawler Access Denied" })).not.toBeInTheDocument();
+    await user.click(screen.getByLabelText("실패 항목만"));
+    await user.type(screen.getByLabelText("대상 필터"), "ssg_123");
+    expect(screen.getByRole("heading", { name: "크롤러 읽기 오류" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "크롤러 접근 거부" })).not.toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Target filter"));
-    await user.type(screen.getByLabelText("Alert filter"), "alert-1");
-    expect(screen.getByRole("heading", { name: "Runner Healthy" })).toBeInTheDocument();
+    await user.clear(screen.getByLabelText("대상 필터"));
+    await user.type(screen.getByLabelText("알림 필터"), "alert-1");
+    expect(screen.getByRole("heading", { name: "실행기 정상" })).toBeInTheDocument();
   });
 
   it("opens finding detail and redacts metadata secrets", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByRole("heading", { name: "Runner Cycle Failure Repeated" });
-    await user.click(screen.getByRole("button", { name: /Runner Cycle Failure Repeated/i }));
-    const panel = screen.getByLabelText("Finding detail");
+    await screen.findByRole("heading", { name: "실행기 주기 실패 반복" });
+    await user.click(screen.getByRole("button", { name: /실행기 주기 실패 반복/i }));
+    const panel = screen.getByLabelText("발견 사항 상세");
     expect(within(panel).getByText("RUNNER_CYCLE_FAILURE")).toBeInTheDocument();
     expect(within(panel).getByText(/retry_count/i)).toBeInTheDocument();
     expect(screen.queryByText("hidden")).not.toBeInTheDocument();
@@ -197,7 +197,7 @@ describe("InvestigationPage", () => {
 
   it("does not expose execute controls", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Investigation");
+    await screen.findByText("PriceBrain 조사");
     expect(screen.queryByRole("button", { name: /^execute$/i })).not.toBeInTheDocument();
   });
 });
@@ -220,7 +220,7 @@ describe("InvestigationPage error states", () => {
       throw new ApiError(403, "이 작업을 볼 권한이 없습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Investigation 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("조사 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
   });
 
   it("shows 500 message and retry", async () => {
@@ -228,8 +228,8 @@ describe("InvestigationPage error states", () => {
       throw new ApiError(500, "운영 정보를 불러오지 못했습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Investigation 정보를 불러오지 못했습니다.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(await screen.findByText("조사 정보를 불러오지 못했습니다.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });
 });
 
@@ -248,7 +248,7 @@ describe("InvestigationPage loading", () => {
     renderPage();
     expect(document.querySelector(".investigation-loading")).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.getAllByText("PriceBrain Investigation").length).toBeGreaterThan(0),
+      expect(screen.getAllByText("PriceBrain 조사").length).toBeGreaterThan(0),
     );
   });
 });

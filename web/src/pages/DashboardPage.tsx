@@ -1,6 +1,7 @@
 import { useAuth } from "../auth/AuthContext";
 import { HealthBadge, QueryState, SectionCard } from "../components/HealthBadge";
 import { getRefreshIntervalMs, useOperationsQuery } from "../hooks/useOperationsQuery";
+import { UI, formatHealthLabel } from "../utils/uiLabels";
 
 export function DashboardPage() {
   const { user, operationsApi } = useAuth();
@@ -19,59 +20,61 @@ export function DashboardPage() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <h2>Dashboard</h2>
-          <p className="muted">Generated at {data.generated_at}</p>
+          <h2>{UI.dashboard}</h2>
+          <p className="muted">
+            {UI.generatedAt} {data.generated_at}
+          </p>
         </div>
-        <HealthBadge label="Dashboard Health" status={data.summary.health} />
+        <HealthBadge label={formatHealthLabel(UI.dashboard)} status={data.summary.health} />
       </div>
 
       <div className="card-grid">
-        <SectionCard title="Crawler" readError={data.crawler.read_error}>
+        <SectionCard title="크롤러" readError={data.crawler.read_error}>
           <ul className="metric-list">
-            <li>Total targets: {data.crawler.total_targets}</li>
-            <li>Failed: {data.crawler.failed_targets}</li>
-            <li>SSG access denied: {data.crawler.ssg_access_denied}</li>
-            <li>Recent failures: {data.crawler.recent_failures}</li>
+            <li>전체 대상: {data.crawler.total_targets}</li>
+            <li>실패: {data.crawler.failed_targets}</li>
+            <li>SSG 접근 거부: {data.crawler.ssg_access_denied}</li>
+            <li>최근 실패: {data.crawler.recent_failures}</li>
           </ul>
         </SectionCard>
-        <SectionCard title="Price" readError={data.price.read_error}>
+        <SectionCard title="가격" readError={data.price.read_error}>
           <ul className="metric-list">
-            <li>Targets: {data.price.targets}</li>
-            <li>With price: {data.price.with_price}</li>
-            <li>No history: {data.price.no_history}</li>
-            <li>Invalid price: {data.price.invalid_price}</li>
+            <li>대상: {data.price.targets}</li>
+            <li>가격 있음: {data.price.with_price}</li>
+            <li>이력 없음: {data.price.no_history}</li>
+            <li>잘못된 가격: {data.price.invalid_price}</li>
           </ul>
         </SectionCard>
-        <SectionCard title="Alerts" readError={data.alerts.read_error}>
+        <SectionCard title="가격 알림" readError={data.alerts.read_error}>
           <ul className="metric-list">
-            <li>Total: {data.alerts.total}</li>
-            <li>Enabled: {data.alerts.enabled}</li>
-            <li>Invalid: {data.alerts.invalid}</li>
-            <li>Recent invalid: {data.alerts.recent_invalid}</li>
+            <li>전체: {data.alerts.total}</li>
+            <li>활성: {data.alerts.enabled}</li>
+            <li>무효: {data.alerts.invalid}</li>
+            <li>최근 무효: {data.alerts.recent_invalid}</li>
           </ul>
         </SectionCard>
-        <SectionCard title="Notifications" readError={data.notifications.read_error}>
+        <SectionCard title="알림 전송" readError={data.notifications.read_error}>
           <ul className="metric-list">
-            <li>Sent: {data.notifications.sent}</li>
-            <li>Failed: {data.notifications.failed}</li>
-            <li>Skipped: {data.notifications.skipped}</li>
-            <li>Recent failures: {data.notifications.recent_failures.length}</li>
+            <li>전송 완료: {data.notifications.sent}</li>
+            <li>실패: {data.notifications.failed}</li>
+            <li>건너뜀: {data.notifications.skipped}</li>
+            <li>최근 실패: {data.notifications.recent_failures.length}</li>
           </ul>
         </SectionCard>
-        <SectionCard title="Runner" readError={data.runner.read_error}>
+        <SectionCard title="실행기" readError={data.runner.read_error}>
           <ul className="metric-list">
-            <li>Status: {data.runner.last_cycle_status}</li>
-            <li>Recent cycles: {data.runner.recent_cycles}</li>
-            <li>Recent failed cycles: {data.runner.recent_failed_cycles}</li>
-            <li>Notification failed: {data.runner.notification_failed}</li>
+            <li>상태: {data.runner.last_cycle_status}</li>
+            <li>최근 실행 횟수: {data.runner.recent_cycles}</li>
+            <li>실패한 실행 횟수: {data.runner.recent_failed_cycles}</li>
+            <li>알림 전송 실패: {data.runner.notification_failed}</li>
           </ul>
         </SectionCard>
-        <SectionCard title="Audit" readError={data.audit.read_error}>
+        <SectionCard title="감사 로그" readError={data.audit.read_error}>
           <ul className="metric-list">
-            <li>Recent events: {data.audit.recent_events}</li>
-            <li>Recent failures: {data.audit.recent_failures}</li>
-            <li>Alert triggered: {data.audit.recent_alert_triggered}</li>
-            <li>Runner failed: {data.audit.recent_runner_failed}</li>
+            <li>최근 이벤트: {data.audit.recent_events}</li>
+            <li>최근 실패: {data.audit.recent_failures}</li>
+            <li>알림 발생: {data.audit.recent_alert_triggered}</li>
+            <li>실행기 실패: {data.audit.recent_runner_failed}</li>
           </ul>
         </SectionCard>
       </div>

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { HealthBadge } from "./HealthBadge";
+import { formatHealthLabel, formatReadErrorBanner } from "../utils/uiLabels";
 
 interface MetricItem {
   label: string;
@@ -31,9 +32,9 @@ export function CommandCenterAreaCard({
     <section className="section-card command-center-area-card">
       <header>
         <h3>{title}</h3>
-        {health ? <HealthBadge label={`${title} Health`} status={health} /> : null}
+        {health ? <HealthBadge label={formatHealthLabel(title)} status={health} /> : null}
       </header>
-      {readError ? <p className="read-error-banner">{readError}</p> : null}
+      {readError ? <p className="read-error-banner">{formatReadErrorBanner(readError)}</p> : null}
       {statusLabel && statusValue ? (
         <p className="command-center-status-line">
           <span>{statusLabel}</span>

@@ -12,7 +12,7 @@ from pricebrain_app.firebase.admin import get_firestore_client
 from pricebrain_app.pipeline.runner import run_pipeline
 from pricebrain_app.repository import constants as c
 from pricebrain_app.repository.listing_repository import build_price_history_document_id
-from pricebrain_app.repository.service import save_validated_product
+from pricebrain_app.repository._testing.persist_helpers import save_validated_product
 from pricebrain_app.tests.emulator_utils import emulator_env, requires_emulator
 
 

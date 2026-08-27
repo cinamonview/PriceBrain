@@ -144,12 +144,12 @@ describe("AuditPage", () => {
 
   it("renders audit summary and health", async () => {
     renderPage();
-    expect(await screen.findByText("PriceBrain Audit Events")).toBeInTheDocument();
-    expect(screen.getByText("Audit Health")).toBeInTheDocument();
-    expect(screen.getAllByText("DEGRADED").length).toBeGreaterThan(0);
-    expect(screen.getByText("Total Events")).toBeInTheDocument();
-    expect(screen.getByText("Failure Events")).toBeInTheDocument();
-    expect(screen.getAllByText("ALERT_TRIGGERED").length).toBeGreaterThan(0);
+    expect(await screen.findByText("PriceBrain 감사 로그")).toBeInTheDocument();
+    expect(screen.getByText("감사 로그 상태")).toBeInTheDocument();
+    expect(screen.getAllByText("일부 문제").length).toBeGreaterThan(0);
+    expect(screen.getByText("전체 이벤트")).toBeInTheDocument();
+    expect(screen.getByText("실패 이벤트")).toBeInTheDocument();
+    expect(screen.getAllByText("알림 발생").length).toBeGreaterThan(0);
   });
 
   it("filters by event type, severity, area, target, alert, failures-only, search, and sort", async () => {
@@ -157,36 +157,36 @@ describe("AuditPage", () => {
     renderPage();
     await screen.findByText("evt-triggered");
 
-    await user.selectOptions(screen.getByLabelText("Event type filter"), "NOTIFICATION_FAILED");
+    await user.selectOptions(screen.getByLabelText("이벤트 유형 필터"), "NOTIFICATION_FAILED");
     expect(screen.getByText("evt-failed")).toBeInTheDocument();
     expect(screen.queryByText("evt-triggered")).not.toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Event type filter"), "ALL");
-    await user.selectOptions(screen.getByLabelText("Severity filter"), "ERROR");
+    await user.selectOptions(screen.getByLabelText("이벤트 유형 필터"), "ALL");
+    await user.selectOptions(screen.getByLabelText("심각도 필터"), "ERROR");
     expect(screen.getByText("evt-failed")).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Severity filter"), "ALL");
-    await user.selectOptions(screen.getByLabelText("Area filter"), "runner");
+    await user.selectOptions(screen.getByLabelText("심각도 필터"), "ALL");
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "runner");
     expect(screen.getByText("evt-runner")).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Area filter"), "ALL");
-    await user.type(screen.getByLabelText("Target filter"), "ssg_1");
+    await user.selectOptions(screen.getByLabelText("영역 필터"), "ALL");
+    await user.type(screen.getByLabelText("대상 필터"), "ssg_1");
     expect(screen.getByText("evt-triggered")).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Target filter"));
-    await user.type(screen.getByLabelText("Alert filter"), "a2");
+    await user.clear(screen.getByLabelText("대상 필터"));
+    await user.type(screen.getByLabelText("알림 필터"), "a2");
     expect(screen.getByText("evt-failed")).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Alert filter"));
-    await user.click(screen.getByLabelText("failures only"));
+    await user.clear(screen.getByLabelText("알림 필터"));
+    await user.click(screen.getByLabelText("실패 항목만"));
     expect(screen.getByText("evt-failed")).toBeInTheDocument();
 
-    await user.click(screen.getByLabelText("failures only"));
-    await user.type(screen.getByLabelText("Audit search"), "runner");
+    await user.click(screen.getByLabelText("실패 항목만"));
+    await user.type(screen.getByLabelText("감사 로그 검색"), "runner");
     expect(screen.getByText("evt-runner")).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Audit search"));
-    await user.selectOptions(screen.getByLabelText("Sort order"), "OLDEST");
+    await user.clear(screen.getByLabelText("감사 로그 검색"));
+    await user.selectOptions(screen.getByLabelText("정렬 순서"), "OLDEST");
     expect(screen.getByText("evt-runner")).toBeInTheDocument();
   });
 
@@ -195,7 +195,7 @@ describe("AuditPage", () => {
     renderPage();
     await screen.findByText("evt-failed");
     await user.click(screen.getByText("evt-failed").closest("button")!);
-    const panel = screen.getByLabelText("Audit event detail");
+    const panel = screen.getByLabelText("감사 이벤트 상세");
     expect(within(panel).getByText("evt-failed")).toBeInTheDocument();
     expect(screen.queryByText("secret-token")).not.toBeInTheDocument();
     expect(screen.queryByText("key-123")).not.toBeInTheDocument();
@@ -206,9 +206,9 @@ describe("AuditPage", () => {
   it("shows ResourceRef navigation links", async () => {
     renderPage();
     await screen.findByText("evt-triggered");
-    expect(screen.getByRole("link", { name: "View Finding" })).toHaveAttribute("href", "/investigation");
-    expect(screen.getByRole("link", { name: "View Execution" })).toHaveAttribute("href", "/execution");
-    expect(screen.getByRole("link", { name: "View Remediation" })).toHaveAttribute("href", "/remediation");
+    expect(screen.getByRole("link", { name: "발견 사항 보기" })).toHaveAttribute("href", "/investigation");
+    expect(screen.getByRole("link", { name: "실행 이력 보기" })).toHaveAttribute("href", "/execution");
+    expect(screen.getByRole("link", { name: "조치 계획 보기" })).toHaveAttribute("href", "/remediation");
   });
 
   it("shows empty state when no events", async () => {
@@ -218,7 +218,7 @@ describe("AuditPage", () => {
       summary: { ...mockResponse.summary, total: 0, recent: 0 },
     }));
     renderPage();
-    expect(await screen.findByText("현재 기록된 audit event가 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("현재 기록된 감사 이벤트가 없습니다.")).toBeInTheDocument();
   });
 });
 
@@ -241,7 +241,7 @@ describe("AuditPage error states", () => {
       throw new ApiError(403, "이 작업을 볼 권한이 없습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Audit 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("감사 로그 정보를 볼 권한이 없습니다.")).toBeInTheDocument();
   });
 
   it("shows 500 message and retry", async () => {
@@ -249,8 +249,8 @@ describe("AuditPage error states", () => {
       throw new ApiError(500, "운영 정보를 불러오지 못했습니다.");
     });
     renderPage();
-    expect(await screen.findByText("Audit 정보를 불러오지 못했습니다.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(await screen.findByText("감사 로그 정보를 불러오지 못했습니다.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });
 });
 
@@ -269,12 +269,12 @@ describe("AuditPage loading", () => {
     );
     renderPage();
     expect(document.querySelector(".investigation-loading")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("PriceBrain Audit Events")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("PriceBrain 감사 로그")).toBeInTheDocument());
   });
 
   it("calls getAudit through operations API", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Audit Events");
+    await screen.findByText("PriceBrain 감사 로그");
     expect(getAudit).toHaveBeenCalled();
   });
 });
@@ -282,7 +282,7 @@ describe("AuditPage loading", () => {
 describe("AuditPage read-only security", () => {
   it("does not expose execute controls", async () => {
     renderPage();
-    await screen.findByText("PriceBrain Audit Events");
+    await screen.findByText("PriceBrain 감사 로그");
     expect(screen.queryByRole("button", { name: /^execute$/i })).not.toBeInTheDocument();
   });
 

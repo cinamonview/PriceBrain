@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { InvestigationFinding } from "../api/types";
 import { SeverityBadge } from "./SeverityBadge";
 import { ResourceRef } from "./ResourceRef";
+import { UI, formatSeverityLabel } from "../utils/uiLabels";
 
 interface CommandCenterFailurePanelProps {
   grouped: Record<"CRITICAL" | "ERROR" | "WARNING", InvestigationFinding[]>;
@@ -19,7 +20,7 @@ function FindingRow({ finding }: { finding: InvestigationFinding }) {
           {finding.alert_id ? <ResourceRef kind="Alert" value={finding.alert_id} /> : null}
         </div>
       </div>
-      <Link to="/investigation">View Investigation</Link>
+      <Link to="/investigation">{UI.viewInvestigation}</Link>
     </li>
   );
 }
@@ -31,17 +32,17 @@ export function CommandCenterFailurePanel({ grouped }: CommandCenterFailurePanel
   return (
     <section className="section-card command-center-failure-panel">
       <header>
-        <h3>Critical / Failure Highlights</h3>
-        <span className="muted">{total} findings</span>
+        <h3>치명적 / 실패 하이라이트</h3>
+        <span className="muted">{total}건 발견</span>
       </header>
       {total === 0 ? (
-        <p className="muted">No highlighted findings in the current filter scope.</p>
+        <p className="muted">현재 필터 범위에서 강조할 발견 사항이 없습니다.</p>
       ) : (
         <div className="failure-groups">
           {(["CRITICAL", "ERROR", "WARNING"] as const).map((severity) =>
             grouped[severity].length > 0 ? (
               <div key={severity} className={`failure-group failure-group-${severity.toLowerCase()}`}>
-                <h4>{severity}</h4>
+                <h4>{formatSeverityLabel(severity)}</h4>
                 <ul className="event-list">
                   {grouped[severity].map((finding) => (
                     <FindingRow key={finding.finding_id} finding={finding} />

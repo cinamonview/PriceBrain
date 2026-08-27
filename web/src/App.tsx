@@ -8,11 +8,12 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ExecutionPage } from "./pages/ExecutionPage";
 import { InvestigationPage } from "./pages/InvestigationPage";
 import { RemediationPage } from "./pages/RemediationPage";
+import { UI } from "./utils/uiLabels";
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
   if (loading) {
-    return <div className="login-page">Loading...</div>;
+    return <div className="login-page">{UI.loading}</div>;
   }
   if (!user) {
     return <Navigate to="/login" replace />;

@@ -5,6 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
+from pricebrain_app.crawler.malls.elevenst import (
+    extract_elevenst_product_id,
+    validate_elevenst_product_url,
+)
 from pricebrain_app.crawler.malls.ssg import extract_ssg_item_id, validate_ssg_product_url
 
 CRAWLER_TARGETS_COLLECTION = "crawler_targets"
@@ -157,6 +161,8 @@ def derive_external_product_id(mall_id: str, product_url: str) -> str | None:
     cleaned_url = validate_target_url(mall, product_url)
     if mall == "ssg":
         return extract_ssg_item_id(cleaned_url)
+    if mall == "elevenst":
+        return extract_elevenst_product_id(cleaned_url)
     return None
 
 
@@ -165,6 +171,8 @@ def validate_target_url(mall_id: str, url: str) -> str:
     mall = mall_id.strip().lower()
     if mall == "ssg":
         return validate_ssg_product_url(url)
+    if mall == "elevenst":
+        return validate_elevenst_product_url(url)
     raise ValueError(f"Unsupported mall for crawl target: {mall_id}")
 
 
@@ -176,4 +184,8 @@ def build_target_id(mall_id: str, product_url: str) -> str:
         item_id = extract_ssg_item_id(cleaned_url)
         if item_id:
             return f"ssg_{item_id}"
+    if mall == "elevenst":
+        product_id = extract_elevenst_product_id(cleaned_url)
+        if product_id:
+            return f"elevenst_{product_id}"
     raise ValueError(f"Could not derive target_id for mall={mall_id}")

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { HealthStatus } from "../api/types";
+import { UI, formatHealthStatus } from "../utils/uiLabels";
 
 export function normalizeHealth(value: string | undefined): HealthStatus {
   const normalized = (value ?? "UNKNOWN").toUpperCase();
@@ -24,7 +25,7 @@ export function HealthBadge({ label, status }: HealthBadgeProps) {
   return (
     <div className={`health-badge health-${normalized.toLowerCase()}`}>
       <span className="health-badge-label">{label}</span>
-      <strong>{normalized}</strong>
+      <strong>{formatHealthStatus(normalized)}</strong>
     </div>
   );
 }
@@ -37,7 +38,7 @@ interface QueryStateProps {
 
 export function QueryState({ status, message, onRetry }: QueryStateProps) {
   if (status === "loading" || status === "idle") {
-    return <div className="query-state">Loading...</div>;
+    return <div className="query-state">{UI.loading}</div>;
   }
   if (status === "unauthorized") {
     return <div className="query-state error">{message ?? "인증이 필요합니다."}</div>;
@@ -51,7 +52,7 @@ export function QueryState({ status, message, onRetry }: QueryStateProps) {
         <p>{message ?? "운영 정보를 불러오지 못했습니다."}</p>
         {onRetry ? (
           <button type="button" onClick={onRetry}>
-            Retry
+            {UI.retry}
           </button>
         ) : null}
       </div>
@@ -71,7 +72,7 @@ export function SectionCard({ title, children, readError }: SectionCardProps) {
     <section className="section-card">
       <header>
         <h3>{title}</h3>
-        {readError ? <span className="read-error">read_error</span> : null}
+        {readError ? <span className="read-error">{UI.readError}</span> : null}
       </header>
       <div>{children}</div>
     </section>

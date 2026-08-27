@@ -17,6 +17,7 @@ class CrawlerStatus(StrEnum):
     PARSE_ERROR = "PARSE_ERROR"
     VALIDATION_ERROR = "VALIDATION_ERROR"
     INGEST_ERROR = "INGEST_ERROR"
+    QUARANTINED = "QUARANTINED"
     SKIPPED = "SKIPPED"
 
 
@@ -63,6 +64,7 @@ class CrawlerBatchSummary:
     parse_error: int = 0
     validation_error: int = 0
     ingest_error: int = 0
+    quarantined: int = 0
     skipped: int = 0
 
     @classmethod
@@ -79,6 +81,7 @@ class CrawlerBatchSummary:
             parse_error=counts[CrawlerStatus.PARSE_ERROR],
             validation_error=counts[CrawlerStatus.VALIDATION_ERROR],
             ingest_error=counts[CrawlerStatus.INGEST_ERROR],
+            quarantined=counts[CrawlerStatus.QUARANTINED],
             skipped=counts[CrawlerStatus.SKIPPED],
         )
 
@@ -94,6 +97,7 @@ class CrawlerBatchSummary:
             f"parse_error: {self.parse_error}",
             f"validation_error: {self.validation_error}",
             f"ingest_error: {self.ingest_error}",
+            f"quarantined: {self.quarantined}",
             f"skipped: {self.skipped}",
         ]
         return "\n".join(lines)
