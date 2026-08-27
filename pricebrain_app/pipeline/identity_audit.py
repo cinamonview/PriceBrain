@@ -38,6 +38,11 @@ _LINE_MARKERS: dict[str, tuple[str, ...]] = {
     ),
     "ASUS": ("ROG STRIX", "ASTRAL", "TUF", "PRIME", "PROART"),
     "GIGABYTE": ("WINDFORCE", "GAMING OC", "AORUS", "MASTER", "AERO", "EAGLE", "INFINITY"),
+    "COLORFUL": ("BATTLE AX", "VULCAN", "ULTRA", "GAMING"),
+    "INNO3D": ("TWIN X2", "X3"),
+    "PALIT": ("INFINITY", "GAMINGPRO", "GAMING PRO"),
+    "GALAX": ("HOF", "EX GAMER"),
+    "XFX": ("SWIFT", "QUICKSILVER"),
 }
 
 _COLOR_MARKERS = (

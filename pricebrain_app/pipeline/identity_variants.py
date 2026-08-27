@@ -46,6 +46,29 @@ MANUFACTURER_VARIANT_TOKENS: Final[dict[str, tuple[tuple[str, str], ...]]] = {
         ("SUPRIM", "SUPRIM"),
         ("SHADOW", "SHADOW"),
     ),
+    "COLORFUL": (
+        ("BATTLE AX", "BATTLEAX"),
+        ("VULCAN", "VULCAN"),
+        ("ULTRA", "ULTRA"),
+        ("GAMING", "GAMING"),
+    ),
+    "INNO3D": (
+        ("TWIN X2", "TWINX2"),
+        ("X3", "X3"),
+    ),
+    "PALIT": (
+        ("GAMING PRO", "GAMINGPRO"),
+        ("GAMINGPRO", "GAMINGPRO"),
+        ("INFINITY", "INFINITY"),
+    ),
+    "GALAX": (
+        ("EX GAMER", "EXGAMER"),
+        ("HOF", "HOF"),
+    ),
+    "XFX": (
+        ("QUICKSILVER", "QUICKSILVER"),
+        ("SWIFT", "SWIFT"),
+    ),
     "ASUS": (
         ("ROG ASTRAL", "ROGASTRAL"),
         ("PROART", "PROART"),

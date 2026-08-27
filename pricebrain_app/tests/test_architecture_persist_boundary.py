@@ -188,3 +188,9 @@ importlib.import_module(name)
 """
     violations = forbidden_persist_bypass_violations(sample, origin="app")
     assert violations == []
+
+
+def test_phase19_constant_import_module_is_detected() -> None:
+    sample = 'importlib.import_module("pricebrain_app.repository.service")\n'
+    violations = forbidden_persist_bypass_violations(sample, origin="app")
+    assert any("importlib.import_module" in item for item in violations)
