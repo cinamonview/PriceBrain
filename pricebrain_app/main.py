@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
+from pricebrain_app.api.analysis import router as analysis_router
 from pricebrain_app.api.health import router as health_router
 from pricebrain_app.api.ingest import router as ingest_router
 from pricebrain_app.api.operations.contract import FORBIDDEN_OPERATIONS_METHODS, OPERATIONS_ENDPOINTS
@@ -36,6 +37,7 @@ app = FastAPI(
 
 app.include_router(health_router)
 app.include_router(ingest_router)
+app.include_router(analysis_router)
 app.include_router(operations_router)
 register_operations_exception_handlers(app)
 

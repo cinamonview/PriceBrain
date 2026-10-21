@@ -88,6 +88,35 @@ class FakeCollectionReference:
     def limit(self, count: int) -> FakeQuery:
         return FakeQuery(self._client, self._collection_path, count)
 
+    def where(
+        self,
+        field_path: str | None = None,
+        op_string: str | None = None,
+        value: Any = None,
+        *,
+        filter: Any = None,
+    ) -> "FakeFilteredQuery":
+        if filter is not None:
+            field_path, op_string, value = filter.field_path, filter.op_string, filter.value
+        if op_string != "==":
+            raise NotImplementedError(f"FakeCollectionReference.where supports '==' only, got {op_string!r}")
+        return FakeFilteredQuery(self, str(field_path), value)
+
+
+class FakeFilteredQuery:
+    """Equality-only query over one collection (enough for unit tests)."""
+
+    def __init__(self, collection: FakeCollectionReference, field_path: str, value: Any) -> None:
+        self._collection = collection
+        self._field_path = field_path
+        self._value = value
+
+    def stream(self) -> Iterator[FakeSnapshot]:
+        for snapshot in self._collection.stream():
+            data = snapshot.to_dict() or {}
+            if data.get(self._field_path) == self._value:
+                yield snapshot
+
 
 class FakeDocumentReference:
     def __init__(self, client: "FakeFirestoreClient", path: str) -> None:
