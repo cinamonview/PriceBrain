@@ -7,6 +7,7 @@ import { UI } from "../utils/uiLabels";
 const NAV_ITEMS = [
   { to: "/", label: UI.commandCenter, end: true },
   { to: "/dashboard", label: UI.dashboard },
+  { to: "/analysis", label: UI.priceAnalysis },
   { to: "/investigation", label: UI.investigation },
   { to: "/remediation", label: UI.remediation },
   { to: "/execution", label: UI.executionHistory },

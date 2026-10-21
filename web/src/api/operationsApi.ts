@@ -4,6 +4,8 @@ import type {
   DashboardResponse,
   ExecutionResponse,
   InvestigationResponse,
+  ProductListResponse,
+  ProductPriceAnalysis,
   RemediationPlanResponse,
 } from "./types";
 
@@ -73,6 +75,12 @@ export function createOperationsApi(getToken: () => Promise<string | null>) {
     getExecution: () => request<ExecutionResponse>("/api/operations/execution", getToken),
     getAudit: () => request<AuditResponse>("/api/operations/audit", getToken),
     getCommandCenter: () => request<CommandCenterResponse>("/api/operations/command-center", getToken),
+    getAnalysisProducts: () => request<ProductListResponse>("/api/analysis/products", getToken),
+    getProductAnalysis: (productId: string, windowDays: number) =>
+      request<ProductPriceAnalysis>(
+        `/api/analysis/products/${encodeURIComponent(productId)}?window_days=${windowDays}`,
+        getToken,
+      ),
   };
 }
 

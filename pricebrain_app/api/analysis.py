@@ -1,10 +1,15 @@
-"""Price analysis API — PRD §11, §13, §14 (read-only, catalog data)."""
+"""Price analysis API — PRD §11, §13, §14 (read-only).
+
+Served under /api and gated by the same Firebase ID token check as the operations
+API, since the only web client today is the login-protected dashboard.
+"""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from google.cloud.firestore_v1 import Client as FirestoreClient
 
 from pricebrain_app.analysis.models import (
@@ -13,14 +18,44 @@ from pricebrain_app.analysis.models import (
     ProductPriceAnalysis,
 )
 from pricebrain_app.analysis.product_analysis import analyze_product
+from pricebrain_app.api.auth.dependencies import require_ops_viewer
 from pricebrain_app.api.deps import get_firestore
 from pricebrain_app.repository.price_analysis_repository import PriceAnalysisRepository
 
-router = APIRouter(prefix="/analysis", tags=["analysis"])
+router = APIRouter(
+    prefix="/api/analysis",
+    tags=["analysis"],
+    dependencies=[Depends(require_ops_viewer)],
+)
+
+PRODUCT_LIST_MAX = 200
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class ProductSummary(BaseModel):
+    product_id: str
+    product_name: str | None = None
+
+
+class ProductListResponse(BaseModel):
+    products: list[ProductSummary]
+
+
+@router.get("/products", response_model=ProductListResponse)
+def list_products(
+    limit: int = Query(PRODUCT_LIST_MAX, ge=1, le=PRODUCT_LIST_MAX),
+    db: FirestoreClient = Depends(get_firestore),
+) -> ProductListResponse:
+    rows = PriceAnalysisRepository(db).list_products(limit=limit)
+    return ProductListResponse(
+        products=[
+            ProductSummary(product_id=product_id, product_name=data.get("normalized_product_name"))
+            for product_id, data in rows
+        ]
+    )
 
 
 @router.get("/products/{product_id}", response_model=ProductPriceAnalysis)

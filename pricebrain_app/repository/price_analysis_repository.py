@@ -19,6 +19,14 @@ class PriceAnalysisRepository(BaseRepository):
         doc = self.db.collection(c.PRODUCTS).document(product_id).get()
         return doc.to_dict() if doc.exists else None
 
+    def list_products(self, *, limit: int) -> list[tuple[str, dict[str, Any]]]:
+        rows = [
+            (snapshot.id, snapshot.to_dict() or {})
+            for snapshot in self.db.collection(c.PRODUCTS).limit(limit).stream()
+        ]
+        rows.sort(key=lambda row: (str(row[1].get("normalized_product_name") or row[0]), row[0]))
+        return rows
+
     def list_price_points(self, listing_id: str) -> list[PricePoint]:
         listing_ref = self.db.collection(c.LISTINGS).document(listing_id)
         points: list[PricePoint] = []

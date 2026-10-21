@@ -282,3 +282,71 @@ export interface CommandCenterResponse {
 }
 
 export type QueryStatus = "idle" | "loading" | "success" | "error" | "unauthorized" | "forbidden";
+
+export type PurchaseVerdict = "BUY_CONSIDER" | "WAIT" | "NOT_RECOMMENDED" | "INSUFFICIENT_DATA";
+
+export type PriceTrend = "DOWN" | "FLAT" | "UP" | "UNKNOWN";
+
+export interface PriceStats {
+  window_days: number;
+  window_start: string;
+  window_end: string;
+  observed_from: string | null;
+  coverage_days: number;
+  data_points: number;
+  current_price: number | null;
+  min_price: number | null;
+  max_price: number | null;
+  average_price: number | null;
+  median_price: number | null;
+  price_range: number | null;
+  start_price: number | null;
+  price_change: number | null;
+  price_change_rate: number | null;
+  price_percentile: number | null;
+  diff_from_min: number | null;
+  diff_from_average_rate: number | null;
+}
+
+export interface PurchaseAssessment {
+  verdict: PurchaseVerdict;
+  label: string;
+  trend: PriceTrend;
+  trend_change_rate: number | null;
+  reasons: string[];
+}
+
+export interface ListingPriceAnalysis {
+  listing_id: string;
+  mall_id: string | null;
+  seller_id: string | null;
+  product_url: string | null;
+  available: boolean;
+  stats: PriceStats;
+}
+
+export interface PriceSeriesPoint {
+  crawled_at: string;
+  price: number;
+}
+
+export interface ProductPriceAnalysis {
+  product_id: string;
+  product_name: string | null;
+  window_days: number;
+  generated_at: string;
+  lowest_listing_id: string | null;
+  stats: PriceStats;
+  purchase: PurchaseAssessment;
+  listings: ListingPriceAnalysis[];
+  lowest_price_series: PriceSeriesPoint[];
+}
+
+export interface ProductSummary {
+  product_id: string;
+  product_name: string | null;
+}
+
+export interface ProductListResponse {
+  products: ProductSummary[];
+}

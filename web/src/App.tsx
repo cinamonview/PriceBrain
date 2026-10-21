@@ -6,6 +6,7 @@ import { AuditPage } from "./pages/AuditPage";
 import { CommandCenterPage } from "./pages/CommandCenterPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ExecutionPage } from "./pages/ExecutionPage";
+import { PriceAnalysisPage } from "./pages/PriceAnalysisPage";
 import { InvestigationPage } from "./pages/InvestigationPage";
 import { RemediationPage } from "./pages/RemediationPage";
 import { UI } from "./utils/uiLabels";
@@ -28,6 +29,7 @@ export default function App() {
       <Route element={<ProtectedRoutes />}>
         <Route index element={<CommandCenterPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/analysis" element={<PriceAnalysisPage />} />
         <Route path="/investigation" element={<InvestigationPage />} />
         <Route path="/remediation" element={<RemediationPage />} />
         <Route path="/execution" element={<ExecutionPage />} />

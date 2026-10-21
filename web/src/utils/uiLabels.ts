@@ -6,6 +6,7 @@ export const UI = {
   operationsDashboard: "운영 대시보드",
   commandCenter: "운영 센터",
   dashboard: "대시보드",
+  priceAnalysis: "가격 분석",
   investigation: "조사",
   remediation: "조치 계획",
   executionHistory: "실행 이력",

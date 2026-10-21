@@ -6,7 +6,8 @@ PRD §11 (데이터 분석), §13 (구매 적정성), §14 (가격 분석 지표
 ## Architecture
 
 ```text
-GET /analysis/products/{product_id}?window_days=30
+GET /api/analysis/products/{product_id}?window_days=30
+GET /api/analysis/products            (분석 대상 상품 목록, 이름순)
       ↓
 PriceAnalysisRepository   (listings where product_id == ?, listings/{id}/price_history)
       ↓
@@ -66,6 +67,14 @@ analysis/purchase         (구매 적정성 규칙, pure)
 
 ## 아직 하지 않은 것
 
-- 인증: 현재 `/analysis`는 카탈로그 읽기 전용이며 별도 인증이 없습니다. 공개 노출 전에 정책을 정해야 합니다.
+- 인증: `/api/analysis`는 운영 API와 같은 Firebase ID 토큰(OPS_VIEWER 이상)이 필요합니다. 일반 사용자에게 공개하려면 별도 정책이 필요합니다.
 - Firestore 인덱스: `listings where product_id ==`는 단일 필드 조회라 추가 인덱스가 필요 없습니다.
 - 가격 대비 성능, 변동성(`volatility`), `purchase_score`(PRD §14 향후 항목)와 시각화는 이후 단계입니다.
+
+## 웹 화면
+
+운영 대시보드(`web/`)에 **가격 분석** 메뉴(`/analysis`)가 있습니다.
+
+- 상품과 기간(7/30/90일)을 고르면 구매 판정, 현재가·기간 통계, 최저가 변동 그래프, 판매처별 표를 보여줍니다.
+- 그래프는 외부 라이브러리 없이 SVG로 그립니다. 가격 이력이 변경 시에만 쌓이므로 계단형 선입니다(`utils/priceChart.ts`).
+- 상품 URL은 http(s)일 때만 링크로 표시합니다.

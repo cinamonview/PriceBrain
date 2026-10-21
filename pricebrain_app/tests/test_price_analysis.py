@@ -12,7 +12,10 @@ from pricebrain_app.analysis.price_stats import compute_price_stats, lowest_pric
 from pricebrain_app.analysis.product_analysis import ListingHistory, analyze_product
 from pricebrain_app.analysis.purchase import assess_purchase
 from pricebrain_app.api.analysis import _utcnow
+from pricebrain_app.api.auth.dependencies import viewer_auth_header
+from pricebrain_app.api.auth.verifier import FakeTokenVerifier, get_token_verifier, reset_token_verifier
 from pricebrain_app.api.deps import get_firestore
+from pricebrain_app.config.settings import clear_settings_cache
 from pricebrain_app.main import app
 from pricebrain_app.repository import constants as c
 from pricebrain_app.tests.fake_firestore import FakeFirestoreClient
@@ -224,18 +227,33 @@ def test_analyze_product_falls_back_to_listing_current_price() -> None:
 
 
 @pytest.fixture
-def analysis_client():
+def analysis_client(monkeypatch: pytest.MonkeyPatch):
     db = FakeFirestoreClient()
 
     def override_get_firestore():
         yield db
 
+    monkeypatch.setenv("PRICEBRAIN_AUTH_ENABLED", "true")
+    clear_settings_cache()
+    reset_token_verifier()
+    verifier = FakeTokenVerifier()
+    app.dependency_overrides[get_token_verifier] = lambda: verifier
     app.dependency_overrides[get_firestore] = override_get_firestore
     app.dependency_overrides[_utcnow] = lambda: NOW
+    base = TestClient(app)
+
+    class AuthedClient:
+        def get(self, url: str, **kwargs):
+            headers = dict(kwargs.pop("headers", {}))
+            headers.setdefault("Authorization", viewer_auth_header()["Authorization"])
+            return base.get(url, headers=headers, **kwargs)
+
     try:
-        yield db, TestClient(app)
+        yield db, AuthedClient(), base
     finally:
         app.dependency_overrides.clear()
+        reset_token_verifier()
+        clear_settings_cache()
 
 
 def _seed_listing(db: FakeFirestoreClient, listing_id: str, product_id: str, prices: list[tuple[float, int]]) -> None:
@@ -258,12 +276,12 @@ def _seed_listing(db: FakeFirestoreClient, listing_id: str, product_id: str, pri
 
 
 def test_api_product_analysis(analysis_client) -> None:
-    db, client = analysis_client
+    db, client, _ = analysis_client
     db.collection(c.PRODUCTS).document(PRODUCT_ID).set({"normalized_product_name": "ZOTAC RTX 5080"})
     _seed_listing(db, "SSG_1", PRODUCT_ID, [(40, 1_000_000), (3, 920_000)])
     _seed_listing(db, "SSG_OTHER", "OTHER-PRODUCT", [(40, 500_000)])
 
-    response = client.get(f"/analysis/products/{PRODUCT_ID}", params={"window_days": 30})
+    response = client.get(f"/api/analysis/products/{PRODUCT_ID}", params={"window_days": 30})
 
     assert response.status_code == 200
     body = response.json()
@@ -276,17 +294,36 @@ def test_api_product_analysis(analysis_client) -> None:
 
 
 def test_api_product_analysis_not_found(analysis_client) -> None:
-    _, client = analysis_client
+    _, client, _ = analysis_client
 
-    response = client.get("/analysis/products/NOPE")
-
-    assert response.status_code == 404
+    assert client.get("/api/analysis/products/NOPE").status_code == 404
 
 
 def test_api_product_analysis_rejects_unsupported_window(analysis_client) -> None:
-    db, client = analysis_client
+    db, client, _ = analysis_client
     _seed_listing(db, "SSG_1", PRODUCT_ID, [(40, 1_000_000)])
 
-    response = client.get(f"/analysis/products/{PRODUCT_ID}", params={"window_days": 14})
+    response = client.get(f"/api/analysis/products/{PRODUCT_ID}", params={"window_days": 14})
 
     assert response.status_code == 422
+
+
+def test_api_list_products_sorted_by_name(analysis_client) -> None:
+    db, client, _ = analysis_client
+    db.collection(c.PRODUCTS).document("B-ID").set({"normalized_product_name": "RTX 5080"})
+    db.collection(c.PRODUCTS).document("A-ID").set({"normalized_product_name": "RTX 4070"})
+
+    response = client.get("/api/analysis/products")
+
+    assert response.status_code == 200
+    assert response.json()["products"] == [
+        {"product_id": "A-ID", "product_name": "RTX 4070"},
+        {"product_id": "B-ID", "product_name": "RTX 5080"},
+    ]
+
+
+def test_api_analysis_requires_authentication(analysis_client) -> None:
+    _, _, anonymous = analysis_client
+
+    assert anonymous.get("/api/analysis/products").status_code == 401
+    assert anonymous.get(f"/api/analysis/products/{PRODUCT_ID}").status_code == 401
