@@ -19,7 +19,12 @@ from pricebrain_app.analysis.price_stats import (
     lowest_price_series,
     normalize_points,
 )
-from pricebrain_app.analysis.purchase import TREND_WINDOW_DAYS, assess_purchase
+from pricebrain_app.analysis.purchase import (
+    DEFAULT_RULES,
+    TREND_WINDOW_DAYS,
+    PurchaseRules,
+    assess_purchase,
+)
 
 
 @dataclass(frozen=True)
@@ -54,6 +59,7 @@ def analyze_product(
     listings: Sequence[ListingHistory],
     window_days: int,
     now: datetime,
+    rules: PurchaseRules = DEFAULT_RULES,
 ) -> ProductPriceAnalysis:
     now = ensure_utc(now)
     listing_results: list[ListingPriceAnalysis] = []
@@ -102,7 +108,7 @@ def analyze_product(
         generated_at=now,
         lowest_listing_id=lowest.listing_id if lowest else None,
         stats=stats,
-        purchase=assess_purchase(stats, trend_stats),
+        purchase=assess_purchase(stats, trend_stats, rules),
         listings=listing_results,
         lowest_price_series=[
             SeriesPoint(crawled_at=max(point.crawled_at, window_start), price=point.price)

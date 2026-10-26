@@ -8,6 +8,8 @@ PRD §13 asks for explainable rules before any ML:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from pricebrain_app.analysis.models import (
     PriceStats,
     PriceTrend,
@@ -15,13 +17,21 @@ from pricebrain_app.analysis.models import (
     PurchaseVerdict,
 )
 
-# Thresholds are percentages. Kept as module constants so they are easy to tune.
-BELOW_AVERAGE_RATE = -3.0
-ABOVE_AVERAGE_RATE = 3.0
-NEAR_MIN_RATE = 3.0
-TREND_RATE = 1.0
 TREND_WINDOW_DAYS = 7
-MIN_COVERAGE_DAYS = 3.0
+
+
+@dataclass(frozen=True)
+class PurchaseRules:
+    """Thresholds in percent; defaults are a starting point, tune against real data."""
+
+    below_average_rate: float = -3.0
+    above_average_rate: float = 3.0
+    near_min_rate: float = 3.0
+    trend_rate: float = 1.0
+    min_coverage_days: float = 3.0
+
+
+DEFAULT_RULES = PurchaseRules()
 
 VERDICT_LABELS = {
     PurchaseVerdict.BUY_CONSIDER: "구매 고려",
@@ -31,13 +41,13 @@ VERDICT_LABELS = {
 }
 
 
-def classify_trend(trend_stats: PriceStats) -> PriceTrend:
+def classify_trend(trend_stats: PriceStats, rules: PurchaseRules = DEFAULT_RULES) -> PriceTrend:
     rate = trend_stats.price_change_rate
     if rate is None:
         return PriceTrend.UNKNOWN
-    if rate <= -TREND_RATE:
+    if rate <= -rules.trend_rate:
         return PriceTrend.DOWN
-    if rate >= TREND_RATE:
+    if rate >= rules.trend_rate:
         return PriceTrend.UP
     return PriceTrend.FLAT
 
@@ -71,14 +81,18 @@ def _describe(stats: PriceStats, trend: PriceTrend, trend_rate: float | None) ->
     return reasons
 
 
-def assess_purchase(stats: PriceStats, trend_stats: PriceStats) -> PurchaseAssessment:
+def assess_purchase(
+    stats: PriceStats,
+    trend_stats: PriceStats,
+    rules: PurchaseRules = DEFAULT_RULES,
+) -> PurchaseAssessment:
     """Assess with window stats (usually 30일) plus a short trend window (7일)."""
-    trend = classify_trend(trend_stats)
+    trend = classify_trend(trend_stats, rules)
     trend_rate = trend_stats.price_change_rate
 
-    if not stats.has_data or stats.coverage_days < MIN_COVERAGE_DAYS:
+    if not stats.has_data or stats.coverage_days < rules.min_coverage_days:
         verdict = PurchaseVerdict.INSUFFICIENT_DATA
-        reasons = [f"가격 이력이 {MIN_COVERAGE_DAYS:g}일 미만이라 판단하기 어렵습니다."]
+        reasons = [f"가격 이력이 {rules.min_coverage_days:g}일 미만이라 판단하기 어렵습니다."]
         return PurchaseAssessment(
             verdict=verdict,
             label=VERDICT_LABELS[verdict],
@@ -91,12 +105,12 @@ def assess_purchase(stats: PriceStats, trend_stats: PriceStats) -> PurchaseAsses
     near_min = (
         stats.min_price is not None
         and stats.current_price is not None
-        and stats.current_price <= stats.min_price * (1 + NEAR_MIN_RATE / 100)
+        and stats.current_price <= stats.min_price * (1 + rules.near_min_rate / 100)
     )
 
-    if vs_average <= BELOW_AVERAGE_RATE and near_min:
+    if vs_average <= rules.below_average_rate and near_min:
         verdict = PurchaseVerdict.BUY_CONSIDER
-    elif vs_average >= ABOVE_AVERAGE_RATE and trend is PriceTrend.DOWN:
+    elif vs_average >= rules.above_average_rate and trend is PriceTrend.DOWN:
         verdict = PurchaseVerdict.NOT_RECOMMENDED
     else:
         verdict = PurchaseVerdict.WAIT

@@ -327,3 +327,73 @@ def test_api_analysis_requires_authentication(analysis_client) -> None:
 
     assert anonymous.get("/api/analysis/products").status_code == 401
     assert anonymous.get(f"/api/analysis/products/{PRODUCT_ID}").status_code == 401
+
+
+# --- 리포트 / 민감도 -------------------------------------------------------
+
+
+def _analysis_for(prices: list[tuple[float, int]]):
+    return analyze_product(
+        product_id="P",
+        product_name="P",
+        listings=[
+            ListingHistory(
+                listing_id="SSG_1",
+                data={"status": "AVAILABLE", "availability": True},
+                points=_series(*prices),
+            )
+        ],
+        window_days=30,
+        now=NOW,
+    )
+
+
+def test_sensitivity_counts_change_with_thresholds() -> None:
+    from pricebrain_app.analysis.report import sensitivity
+
+    # 30일 평균 대비 약 -2.1%, 현재가가 최저가: 기본(-3%)에서는 관망, -2%로 완화하면 구매 고려.
+    analyses = [_analysis_for([(30, 1_000_000), (5, 980_000), (2, 975_000)])]
+
+    rows = {
+        (row.below_average_rate, row.near_min_rate): row.counts
+        for row in sensitivity(analyses, now=NOW, below_average_rates=(-2.0, -3.0), near_min_rates=(3.0,))
+    }
+
+    assert rows[(-3.0, 3.0)][PurchaseVerdict.WAIT] == 1
+    assert rows[(-3.0, 3.0)][PurchaseVerdict.BUY_CONSIDER] == 0
+    assert rows[(-2.0, 3.0)][PurchaseVerdict.BUY_CONSIDER] == 1
+
+
+def test_assess_purchase_respects_custom_rules() -> None:
+    from pricebrain_app.analysis.purchase import PurchaseRules
+
+    points = _series((40, 1_000_000), (3, 920_000))
+    stats = compute_price_stats(points, window_days=30, now=NOW)
+    trend = compute_price_stats(points, window_days=7, now=NOW)
+
+    strict = PurchaseRules(below_average_rate=-20.0)
+
+    assert assess_purchase(stats, trend, strict).verdict is PurchaseVerdict.WAIT
+    assert assess_purchase(stats, trend).verdict is PurchaseVerdict.BUY_CONSIDER
+
+
+def test_show_price_analysis_cli_report() -> None:
+    from pricebrain_app.scripts.show_price_analysis import run
+
+    db = FakeFirestoreClient()
+    db.collection(c.PRODUCTS).document(PRODUCT_ID).set({"normalized_product_name": "ZOTAC RTX 5080"})
+    _seed_listing(db, "SSG_1", PRODUCT_ID, [(40, 1_000_000), (3, 920_000)])
+
+    output = run(db, window_days=30, show_sensitivity=True, now=NOW)
+
+    assert "ZOTAC RTX 5080" in output
+    assert "920,000" in output
+    assert "구매 고려" in output
+    assert "BUY_CONSIDER 1" in output
+    assert "판정 기준 민감도 (상품 1개)" in output
+
+
+def test_show_price_analysis_cli_handles_no_products() -> None:
+    from pricebrain_app.scripts.show_price_analysis import run
+
+    assert run(FakeFirestoreClient(), now=NOW) == "분석할 상품이 없습니다."

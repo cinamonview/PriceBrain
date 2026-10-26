@@ -51,6 +51,18 @@ analysis/purchase         (구매 적정성 규칙, pure)
 
 각 판정에는 사용자에게 보여줄 `reasons` 문장이 함께 반환됩니다.
 
+임계값은 `PurchaseRules`(`analysis/purchase.py`)에 모여 있고 기본값은 **실제 데이터로 검증하기 전의 시작값**입니다.
+
+### 실제 데이터로 기준 점검하기
+
+```text
+python -m pricebrain_app.scripts.show_price_analysis --window-days 30 --sensitivity
+```
+
+읽기 전용입니다. 상품별 현재가·평균·최저가·판정을 표로 보여주고, `--sensitivity`를 주면 평균 대비 / 최저가 근접 임계값을 바꿨을 때
+판정 수가 어떻게 달라지는지 보여줍니다. 실제(`GOOGLE_APPLICATION_CREDENTIALS`) 또는 에뮬레이터(`FIRESTORE_EMULATOR_HOST`) 데이터에 대해 실행합니다.
+특정 상품만 보려면 `--product-id`를 사용합니다.
+
 ## Response (요약)
 
 ```json
