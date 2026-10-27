@@ -88,3 +88,11 @@ requires_emulator = pytest.mark.skipif(
     not is_emulator_running(),
     reason="SKIPPED — Firestore Emulator not running (127.0.0.1:8080)",
 )
+
+# For tests that build the real Firestore client from the environment (no emulator_env):
+# without FIRESTORE_EMULATOR_HOST they would reach real Firestore, and with it set but the
+# emulator down they retry until the gRPC deadline.
+requires_emulator_env = pytest.mark.skipif(
+    not (os.environ.get("FIRESTORE_EMULATOR_HOST") and is_emulator_running()),
+    reason="SKIPPED — set FIRESTORE_EMULATOR_HOST and start the Firestore Emulator",
+)

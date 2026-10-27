@@ -40,6 +40,7 @@ from pricebrain_app.crawler.remediation_operations_models import (
 )
 from pricebrain_app.scripts import show_pricebrain_command_center
 from pricebrain_app.tests.conftest import TEST_INGEST_API_KEY
+from pricebrain_app.tests.emulator_utils import requires_emulator_env
 from pricebrain_app.tests.fake_firestore import FakeFirestoreClient
 
 NOW = datetime(2026, 8, 21, 12, 0, 0, tzinfo=timezone.utc)
@@ -353,6 +354,7 @@ def test_w_alert_trigger_guard(executor: RemediationActionExecutor, monkeypatch:
     mark.assert_not_called()
 
 
+@requires_emulator_env
 def test_x_command_center_integration() -> None:
     view = build_command_center_operations_view()
     snapshot = view.build_snapshot(filters=CommandCenterFilter(recent=5), now=NOW)
@@ -363,6 +365,7 @@ def test_x_command_center_integration() -> None:
     assert snapshot.health
 
 
+@requires_emulator_env
 def test_y_command_center_json() -> None:
     view = build_command_center_operations_view()
     payload = view.build_snapshot(filters=CommandCenterFilter(recent=5), now=NOW).to_dict()
@@ -401,6 +404,7 @@ def test_cli_help() -> None:
     assert exc.value.code == 0
 
 
+@requires_emulator_env
 def test_cli_json_smoke(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_view = MagicMock()
     mock_view.build_snapshot.return_value = build_command_center_operations_view().build_snapshot(now=NOW)
